@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.routers import annonces
 # Création de l'application
 app = FastAPI(
     title="KaribMarket API",
@@ -32,3 +32,10 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+app.include_router(
+    annonces.router,
+    prefix="/api/v1",
+    tags=["Annonces"]  # Groupe dans la doc Swagger
+)
