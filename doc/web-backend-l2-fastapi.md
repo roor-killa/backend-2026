@@ -2,7 +2,7 @@
 ## FastAPI & Python : Construire des APIs Professionnelles
 
 > **Université des Antilles — Département Informatique**  
-> Durée totale : 32h | 70% TP / 30% Cours  
+> Durée totale : 32h
 > Prérequis : Python (POO), bases HTTP, notions de bases de données  
 > Évaluation : 40% contrôle continu — 60% projet final
 
@@ -1640,39 +1640,9 @@ pytest tests/ -v --cov=app --cov-report=html
 |-------|-------------|
 | 🌴 **TiTourisme** | API d'activités et hébergements touristiques en Martinique/Guadeloupe |
 | 🎵 **KaribEvent** | API de gestion d'événements culturels et concerts |
-| 🌿 **Marché Créole** | API de produits du terroir, producteurs locaux, recettes |
-| 🏖️ **CovoiturAgeMQ** | API de covoiturage local avec trajet et conducteurs |
+| 🌿 **Marché Kréyol** | API de produits du terroir, producteurs locaux, recettes |
+| 🏖️ **DébatjéNou** | API de covoiturage local avec trajet et conducteurs |
 | 📚 **BiblioUA** | API de bibliothèque universitaire avec prêts et réservations |
-
-## Critères d'évaluation
-
-### Technique (60 points)
-
-| Critère | Points |
-|---------|--------|
-| Modèles de données cohérents (SQLAlchemy) | 10 |
-| Schémas Pydantic avec validation | 10 |
-| Routes CRUD complètes et conventions REST | 10 |
-| Authentification JWT fonctionnelle | 10 |
-| Docker Compose opérationnel | 10 |
-| Tests (minimum 5 tests significatifs) | 10 |
-
-### Qualité (20 points)
-
-| Critère | Points |
-|---------|--------|
-| Documentation Swagger complète et claire | 5 |
-| Gestion des erreurs cohérente | 5 |
-| Structure du code propre | 5 |
-| README avec instructions de démarrage | 5 |
-
-### Soutenance (20 points)
-
-| Critère | Points |
-|---------|--------|
-| Démo live fonctionnelle | 10 |
-| Explication des choix techniques | 5 |
-| Réponses aux questions | 5 |
 
 ## Livrables attendus
 
