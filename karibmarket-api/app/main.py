@@ -6,5 +6,5 @@ app = FastAPI()
 app.include_router(
     annonces_router,
     prefix="/annonces",
-    tags=["Annonces"]
+    tags=["Annonces"],
 )
