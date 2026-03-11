@@ -1,96 +1,46 @@
-from typing import Optional
+from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.annonce import Annonce
+from app.schemas.annonce import (
+    AnnonceCreate,
+    AnnonceResponse,
+    AnnonceUpdate,
+    CategorieAnnonce,
+)
 
 router = APIRouter()
 
 
-class AnnonceCreate(BaseModel):
-    titre: str = Field(..., min_length=3, max_length=120)
-    description: str = Field(..., min_length=10, max_length=500)
-    prix: float = Field(..., gt=0)
-    commune: str = Field(..., min_length=2, max_length=100)
-    categorie: str = Field(..., min_length=2, max_length=100)
-
-
-class Annonce(AnnonceCreate):
-    id: int
-
-
-annonces: list[Annonce] = [
-    Annonce(
-        id=1,
-        titre="Bananes plantain fraîches",
-        description="Lot de 20 bananes plantain récoltées ce matin.",
-        prix=12.0,
-        commune="Le Lamentin",
-        categorie="Alimentation",
-    ),
-    Annonce(
-        id=2,
-        titre="Scooter 125cc occasion",
-        description="Scooter en bon état, entretien à jour, idéal pour la ville.",
-        prix=1600.0,
-        commune="Fort-de-France",
-        categorie="Transport",
-    ),
-    Annonce(
-        id=3,
-        titre="Table en bois massif",
-        description="Table 6 places, fabrication artisanale locale.",
-        prix=350.0,
-        commune="Schoelcher",
-        categorie="Maison",
-    ),
-    Annonce(
-        id=4,
-        titre="Cours de mathématiques niveau lycée",
-        description="Soutien scolaire en visio ou à domicile, 2h par séance.",
-        prix=40.0,
-        commune="Le Robert",
-        categorie="Services",
-    ),
-    Annonce(
-        id=5,
-        titre="Kayak 2 places",
-        description="Kayak rigide avec pagaies, parfait pour sorties en mer calme.",
-        prix=420.0,
-        commune="Le Marin",
-        categorie="Loisirs",
-    ),
-]
-
-
-@router.get("/annonces", response_model=list[Annonce])
+@router.get("/annonces", response_model=list[AnnonceResponse])
 def list_annonces(
-    commune: Optional[str] = Query(default=None),
-    categorie: Optional[str] = Query(default=None),
+    commune: str | None = Query(default=None),
+    categorie: CategorieAnnonce | None = Query(default=None),
+    page: int = Query(default=1, gt=0),
+    limit: int = Query(default=10, gt=0, le=100),
+    db: Session = Depends(get_db),
 ) -> list[Annonce]:
-    resultats = annonces
+    query = select(Annonce).where(Annonce.actif.is_(True))
 
     if commune:
-        resultats = [
-            annonce
-            for annonce in resultats
-            if annonce.commune.lower() == commune.lower()
-        ]
+        query = query.where(Annonce.commune.ilike(f"%{commune}%"))
 
     if categorie:
-        resultats = [
-            annonce
-            for annonce in resultats
-            if annonce.categorie.lower() == categorie.lower()
-        ]
+        query = query.where(Annonce.categorie == categorie)
 
-    return resultats
+    query = query.offset((page - 1) * limit).limit(limit)
+    return list(db.execute(query).scalars().all())
 
 
-@router.get("/annonces/{annonce_id}", response_model=Annonce)
-def get_annonce(annonce_id: int) -> Annonce:
-    for annonce in annonces:
-        if annonce.id == annonce_id:
-            return annonce
+@router.get("/annonces/{annonce_id}", response_model=AnnonceResponse)
+def get_annonce(annonce_id: int, db: Session = Depends(get_db)) -> Annonce:
+    annonce = db.get(Annonce, annonce_id)
+    if annonce and annonce.actif:
+        return annonce
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -98,20 +48,57 @@ def get_annonce(annonce_id: int) -> Annonce:
     )
 
 
-@router.post("/annonces", response_model=Annonce, status_code=status.HTTP_201_CREATED)
-def create_annonce(payload: AnnonceCreate) -> Annonce:
-    next_id = max((annonce.id for annonce in annonces), default=0) + 1
-    nouvelle_annonce = Annonce(id=next_id, **payload.model_dump())
-    annonces.append(nouvelle_annonce)
+@router.post(
+    "/annonces",
+    response_model=AnnonceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_annonce(payload: AnnonceCreate, db: Session = Depends(get_db)) -> Annonce:
+    nouvelle_annonce = Annonce(
+        **payload.model_dump(),
+        actif=True,
+        created_at=datetime.utcnow(),
+        updated_at=None,
+    )
+    db.add(nouvelle_annonce)
+    db.commit()
+    db.refresh(nouvelle_annonce)
     return nouvelle_annonce
 
 
-@router.delete("/annonces/{annonce_id}", status_code=status.HTTP_200_OK)
-def delete_annonce(annonce_id: int) -> dict[str, str]:
-    for index, annonce in enumerate(annonces):
-        if annonce.id == annonce_id:
-            del annonces[index]
-            return {"message": f"Annonce {annonce_id} supprimée"}
+@router.patch("/annonces/{annonce_id}", response_model=AnnonceResponse)
+def update_annonce(
+    annonce_id: int,
+    modifications: AnnonceUpdate,
+    db: Session = Depends(get_db),
+) -> Annonce:
+    annonce = db.get(Annonce, annonce_id)
+    if annonce and annonce.actif:
+        changements = modifications.model_dump(exclude_unset=True)
+        for key, value in changements.items():
+            setattr(annonce, key, value)
+        annonce.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(annonce)
+        return annonce
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Annonce {annonce_id} introuvable",
+    )
+
+
+@router.delete(
+    "/annonces/{annonce_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_annonce(annonce_id: int, db: Session = Depends(get_db)) -> None:
+    annonce = db.get(Annonce, annonce_id)
+    if annonce and annonce.actif:
+        annonce.actif = False
+        annonce.updated_at = datetime.utcnow()
+        db.commit()
+        return
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
