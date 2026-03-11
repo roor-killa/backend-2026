@@ -1,47 +1,12 @@
-from fastapi import APIRouter, Path, Query, HTTPException, status
+from fastapi import APIRouter, Path, Query, HTTPException, status, Depends
+from sqlalchemy.orm import Session
 from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
+from app.models.annonce import Annonce
+import app.models.utilisateur  # noqa: F401 — nécessaire pour résoudre la relation ORM
+from app.database import get_db
 from typing import Optional, List
-from datetime import datetime
 
 router = APIRouter()
-
-# Base de données simulée
-annonces_db = [
-    {
-        "id": 1,
-        "titre": "Vente mangues Julie",
-        "description": None,
-        "prix": 3.50,
-        "commune": "Le Lamentin",
-        "categorie": "alimentaire",
-        "actif": True,
-        "created_at": datetime.now(),
-        "updated_at": None
-    },
-    {
-        "id": 2,
-        "titre": "Cours de yoga plage",
-        "description": None,
-        "prix": 25.00,
-        "commune": "Sainte-Anne",
-        "categorie": "services",
-        "actif": True,
-        "created_at": datetime.now(),
-        "updated_at": None
-    },
-    {
-        "id": 3,
-        "titre": "Location VTT",
-        "description": None,
-        "prix": 15.00,
-        "commune": "Le Morne-Rouge",
-        "categorie": "loisirs",
-        "actif": True,
-        "created_at": datetime.now(),
-        "updated_at": None
-    },
-]
-compteur_id = 4
 
 
 @router.post(
@@ -50,7 +15,7 @@ compteur_id = 4
     status_code=status.HTTP_201_CREATED,
     summary="Créer une nouvelle annonce"
 )
-def create_annonce(annonce: AnnonceCreate):
+def create_annonce(annonce: AnnonceCreate, db: Session = Depends(get_db)):
     """
     Crée une nouvelle annonce dans KaribMarket.
 
@@ -59,19 +24,10 @@ def create_annonce(annonce: AnnonceCreate):
     - **commune** : Commune de Martinique ou Guadeloupe
     - **categorie** : alimentaire, services, loisirs, immobilier, vehicules, autre
     """
-    global compteur_id
-
-    nouvelle_annonce = {
-        "id": compteur_id,
-        **annonce.model_dump(),
-        "actif": True,
-        "created_at": datetime.now(),
-        "updated_at": None
-    }
-
-    annonces_db.append(nouvelle_annonce)
-    compteur_id += 1
-
+    nouvelle_annonce = Annonce(**annonce.model_dump())
+    db.add(nouvelle_annonce)
+    db.commit()
+    db.refresh(nouvelle_annonce)
     return nouvelle_annonce
 
 
@@ -82,20 +38,23 @@ def create_annonce(annonce: AnnonceCreate):
 )
 def update_annonce(
     annonce_id: int = Path(..., gt=0, description="ID de l'annonce"),
-    modifications: AnnonceUpdate = ...
+    modifications: AnnonceUpdate = ...,
+    db: Session = Depends(get_db)
 ):
-    for i, annonce in enumerate(annonces_db):
-        if annonce["id"] == annonce_id:
-            # model_dump(exclude_unset=True) → seulement les champs fournis
-            changements = modifications.model_dump(exclude_unset=True)
-            annonces_db[i].update(changements)
-            annonces_db[i]["updated_at"] = datetime.now()
-            return annonces_db[i]
+    annonce = db.get(Annonce, annonce_id)
+    if not annonce:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Annonce {annonce_id} introuvable"
+        )
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Annonce {annonce_id} introuvable"
-    )
+    changements = modifications.model_dump(exclude_unset=True)
+    for champ, valeur in changements.items():
+        setattr(annonce, champ, valeur)
+
+    db.commit()
+    db.refresh(annonce)
+    return annonce
 
 
 @router.get(
@@ -104,30 +63,32 @@ def update_annonce(
     summary="Récupérer une annonce par son ID"
 )
 def get_annonce(
-    annonce_id: int = Path(..., gt=0, description="ID de l'annonce")
+    annonce_id: int = Path(..., gt=0, description="ID de l'annonce"),
+    db: Session = Depends(get_db)
 ):
     """
     Récupère une annonce par son identifiant.
     - **annonce_id** : doit être un entier positif
     """
-    for annonce in annonces_db:
-        if annonce["id"] == annonce_id:
-            return annonce
-    raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    annonce = db.get(Annonce, annonce_id)
+    if not annonce:
+        raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    return annonce
 
 
 @router.delete("/annonces/{annonce_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_annonce(
-    annonce_id: int = Path(..., gt=0, description="ID de l'annonce à supprimer")
+    annonce_id: int = Path(..., gt=0, description="ID de l'annonce à supprimer"),
+    db: Session = Depends(get_db)
 ):
     """
     Supprime une annonce par son identifiant.
     """
-    for i, annonce in enumerate(annonces_db):
-        if annonce["id"] == annonce_id:
-            annonces_db.pop(i)
-            return
-    raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    annonce = db.get(Annonce, annonce_id)
+    if not annonce:
+        raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    db.delete(annonce)
+    db.commit()
 
 
 @router.get(
@@ -140,7 +101,8 @@ def list_annonces(
     categorie: Optional[str] = Query(None, description="Filtrer par catégorie"),
     prix_max: Optional[float] = Query(None, gt=0, description="Prix maximum"),
     page: int = Query(1, gt=0, description="Numéro de page"),
-    limit: int = Query(10, gt=0, le=100, description="Nombre de résultats par page")
+    limit: int = Query(10, gt=0, le=100, description="Nombre de résultats par page"),
+    db: Session = Depends(get_db)
 ):
     """
     Liste les annonces avec filtres et pagination.
@@ -150,21 +112,20 @@ def list_annonces(
     - /annonces?prix_max=20&page=2&limit=5
     - /annonces?categorie=alimentaire
     """
-    resultats = annonces_db.copy()
+    query = db.query(Annonce)
 
     if commune:
-        resultats = [a for a in resultats if commune.lower() in a["commune"].lower()]
+        query = query.filter(Annonce.commune.ilike(f"%{commune}%"))
     if categorie:
-        resultats = [a for a in resultats if a["categorie"] == categorie]
+        query = query.filter(Annonce.categorie == categorie)
     if prix_max:
-        resultats = [a for a in resultats if a["prix"] <= prix_max]
+        query = query.filter(Annonce.prix <= prix_max)
 
-    total = len(resultats)
-    debut = (page - 1) * limit
-    fin = debut + limit
+    total = query.count()
+    resultats = query.offset((page - 1) * limit).limit(limit).all()
 
     return {
-        "data": resultats[debut:fin],
+        "data": [AnnonceResponse.model_validate(a) for a in resultats],
         "meta": {
             "total": total,
             "page": page,
