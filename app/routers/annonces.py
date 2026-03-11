@@ -1,20 +1,14 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
+from fastapi import APIRouter, HTTPException, Query, status
+from typing import Optional, List
+from datetime import datetime
+from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
 
-# On crée un "routeur" pour regrouper toutes les routes liées aux annonces
 router = APIRouter()
 
-# Notre fausse base de données (en attendant le module 4 !)
-annonces_db = [
-    {"id": 1, "titre": "Vente mangues Julie bio", "prix": 3.50, "commune": "Le Lamentin", "categorie": "alimentaire"},
-    {"id": 2, "titre": "Location Kayak", "prix": 25.00, "commune": "Le Robert", "categorie": "loisirs"},
-    {"id": 3, "titre": "Cours de Maths", "prix": 20.00, "commune": "Fort-de-France", "categorie": "services"},
-    {"id": 4, "titre": "Clio 3", "prix": 3200.00, "commune": "Sainte-Anne", "categorie": "vehicules"},
-    {"id": 5, "titre": "T2 meublé", "prix": 650.00, "commune": "Schœlcher", "categorie": "immobilier"}
-]
+annonces_db = []
+compteur_id = 1
 
-# Route 1 : Lister les annonces (avec filtres optionnels)
-@router.get("/annonces")
+@router.get("/annonces", response_model=List[AnnonceResponse])
 def list_annonces(
     commune: Optional[str] = Query(None, description="Filtrer par commune"),
     categorie: Optional[str] = Query(None, description="Filtrer par catégorie")
@@ -26,28 +20,44 @@ def list_annonces(
         resultats = [a for a in resultats if categorie.lower() == a["categorie"].lower()]
     return resultats
 
-# Route 2 : Récupérer une seule annonce par son ID
-@router.get("/annonces/{id}")
+@router.get("/annonces/{id}", response_model=AnnonceResponse)
 def get_annonce(id: int):
     for annonce in annonces_db:
         if annonce["id"] == id:
             return annonce
-    raise HTTPException(status_code=404, detail=f"L'annonce {id} est introuvable")
+    raise HTTPException(status_code=404, detail=f"Annonce {id} introuvable")
 
-# Route 3 : Créer une annonce
-@router.post("/annonces", status_code=201)
-def create_annonce(nouvelle_annonce: dict):
-    # On génère un ID automatiquement
-    nouvel_id = max([a["id"] for a in annonces_db]) + 1 if annonces_db else 1
-    nouvelle_annonce["id"] = nouvel_id
+@router.post("/annonces", response_model=AnnonceResponse, status_code=status.HTTP_201_CREATED)
+def create_annonce(annonce: AnnonceCreate):
+    global compteur_id
+    
+    nouvelle_annonce = {
+        "id": compteur_id,
+        **annonce.model_dump(),  # Transforme le schéma validé en dictionnaire
+        "actif": True,
+        "created_at": datetime.now(),
+        "updated_at": None
+    }
+    
     annonces_db.append(nouvelle_annonce)
+    compteur_id += 1
     return nouvelle_annonce
 
-# Route 4 : Supprimer une annonce
-@router.delete("/annonces/{id}", status_code=204)
+@router.patch("/annonces/{id}", response_model=AnnonceResponse)
+def update_annonce(id: int, modifications: AnnonceUpdate):
+    for i, annonce in enumerate(annonces_db):
+        if annonce["id"] == id:
+            changements = modifications.model_dump(exclude_unset=True) # Que les champs modifiés
+            annonces_db[i].update(changements)
+            annonces_db[i]["updated_at"] = datetime.now()
+            return annonces_db[i]
+            
+    raise HTTPException(status_code=404, detail=f"Annonce {id} introuvable")
+
+@router.delete("/annonces/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_annonce(id: int):
     for i, annonce in enumerate(annonces_db):
         if annonce["id"] == id:
             del annonces_db[i]
             return
-    raise HTTPException(status_code=404, detail=f"L'annonce {id} est introuvable")
+    raise HTTPException(status_code=404, detail=f"Annonce {id} introuvable")
