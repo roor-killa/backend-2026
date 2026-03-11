@@ -1,86 +1,131 @@
-from fastapi import APIRouter, Path, Query, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-
-class AnnonceCreate(BaseModel):
-    titre: str
-    prix: float
-    commune: str
+from fastapi import APIRouter, Path, Query, HTTPException, status, Depends
+from sqlalchemy.orm import Session
+from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
+from app.models.annonce import Annonce
+import app.models.utilisateur  # noqa: F401 — nécessaire pour résoudre la relation ORM
+from app.database import get_db
+from typing import Optional, List
 
 router = APIRouter()
 
-# Données temporaires (en attendant la base de données)
-annonces_db = [
-    {"id": 1, "titre": "Vente mangues Julie", "prix": 3.50, "commune": "Le Lamentin"},
-    {"id": 2, "titre": "Cours de yoga plage", "prix": 25.00, "commune": "Sainte-Anne"},
-    {"id": 3, "titre": "Location VTT", "prix": 15.00, "commune": "Le Morne-Rouge"},
-]
 
-# --- Créer une annonce ---
-@router.post("/annonces", status_code=201)
-def create_annonce(annonce: AnnonceCreate):
+@router.post(
+    "/annonces",
+    response_model=AnnonceResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Créer une nouvelle annonce"
+)
+def create_annonce(annonce: AnnonceCreate, db: Session = Depends(get_db)):
     """
-    Crée une nouvelle annonce.
+    Crée une nouvelle annonce dans KaribMarket.
 
-    Body JSON attendu :
-    ```json
-    {
-        "titre": "Vente mangues Julie",
-        "prix": 3.50,
-        "commune": "Le Lamentin"
-    }
-    ```
+    - **titre** : Entre 5 et 100 caractères
+    - **prix** : Doit être positif (> 0)
+    - **commune** : Commune de Martinique ou Guadeloupe
+    - **categorie** : alimentaire, services, loisirs, immobilier, vehicules, autre
     """
-    nouvel_id = max(a["id"] for a in annonces_db) + 1
-    nouvelle_annonce = {"id": nouvel_id, **annonce.model_dump()}
-    annonces_db.append(nouvelle_annonce)
+    nouvelle_annonce = Annonce(**annonce.model_dump())
+    db.add(nouvelle_annonce)
+    db.commit()
+    db.refresh(nouvelle_annonce)
     return nouvelle_annonce
 
-# --- Paramètres de chemin (Path Parameters) ---
-@router.get("/annonces/{annonce_id}")
+
+@router.patch(
+    "/annonces/{annonce_id}",
+    response_model=AnnonceResponse,
+    summary="Modifier partiellement une annonce"
+)
+def update_annonce(
+    annonce_id: int = Path(..., gt=0, description="ID de l'annonce"),
+    modifications: AnnonceUpdate = ...,
+    db: Session = Depends(get_db)
+):
+    annonce = db.get(Annonce, annonce_id)
+    if not annonce:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Annonce {annonce_id} introuvable"
+        )
+
+    changements = modifications.model_dump(exclude_unset=True)
+    for champ, valeur in changements.items():
+        setattr(annonce, champ, valeur)
+
+    db.commit()
+    db.refresh(annonce)
+    return annonce
+
+
+@router.get(
+    "/annonces/{annonce_id}",
+    response_model=AnnonceResponse,
+    summary="Récupérer une annonce par son ID"
+)
 def get_annonce(
-    annonce_id: int = Path(..., gt=0, description="ID de l'annonce")
+    annonce_id: int = Path(..., gt=0, description="ID de l'annonce"),
+    db: Session = Depends(get_db)
 ):
     """
     Récupère une annonce par son identifiant.
     - **annonce_id** : doit être un entier positif
     """
-    for annonce in annonces_db:
-        if annonce["id"] == annonce_id:
-            return annonce
-    # Si non trouvée → erreur 404 automatique
-    raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    annonce = db.get(Annonce, annonce_id)
+    if not annonce:
+        raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    return annonce
 
-# --- Paramètres de requête (Query Parameters) ---
-@router.get("/annonces")
+
+@router.delete("/annonces/{annonce_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_annonce(
+    annonce_id: int = Path(..., gt=0, description="ID de l'annonce à supprimer"),
+    db: Session = Depends(get_db)
+):
+    """
+    Supprime une annonce par son identifiant.
+    """
+    annonce = db.get(Annonce, annonce_id)
+    if not annonce:
+        raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+    db.delete(annonce)
+    db.commit()
+
+
+@router.get(
+    "/annonces",
+    response_model=dict,
+    summary="Lister les annonces avec filtres et pagination"
+)
 def list_annonces(
     commune: Optional[str] = Query(None, description="Filtrer par commune"),
+    categorie: Optional[str] = Query(None, description="Filtrer par catégorie"),
     prix_max: Optional[float] = Query(None, gt=0, description="Prix maximum"),
     page: int = Query(1, gt=0, description="Numéro de page"),
-    limit: int = Query(10, gt=0, le=100, description="Nombre de résultats par page")
+    limit: int = Query(10, gt=0, le=100, description="Nombre de résultats par page"),
+    db: Session = Depends(get_db)
 ):
     """
     Liste les annonces avec filtres et pagination.
-    
+
     Exemples :
     - /annonces?commune=Le Lamentin
     - /annonces?prix_max=20&page=2&limit=5
+    - /annonces?categorie=alimentaire
     """
-    resultats = annonces_db.copy()
+    query = db.query(Annonce)
 
-    # Filtrage
     if commune:
-        resultats = [a for a in resultats if commune.lower() in a["commune"].lower()]
+        query = query.filter(Annonce.commune.ilike(f"%{commune}%"))
+    if categorie:
+        query = query.filter(Annonce.categorie == categorie)
     if prix_max:
-        resultats = [a for a in resultats if a["prix"] <= prix_max]
+        query = query.filter(Annonce.prix <= prix_max)
 
-    # Pagination
-    total = len(resultats)
-    debut = (page - 1) * limit
-    fin = debut + limit
+    total = query.count()
+    resultats = query.offset((page - 1) * limit).limit(limit).all()
 
     return {
-        "data": resultats[debut:fin],
+        "data": [AnnonceResponse.model_validate(a) for a in resultats],
         "meta": {
             "total": total,
             "page": page,

@@ -402,6 +402,10 @@ Créer la structure du projet KaribMarket et implémenter les premières routes.
 
 Créer dans `app/routers/annonces.py` les routes suivantes en utilisant une liste Python comme base de données temporaire :
 
+Modifier annonces.py
+Remplacer FastAPI par APIRouter et app.get(...) par router.get(...)
+
+
 ```python
 # Données de test — À vous de compléter avec des annonces réalistes !
 annonces = [
@@ -428,6 +432,11 @@ app.include_router(
 )
 ```
 
+Avec prefix="/api/v1", les url d'accès aux fonctions deviennent :
+http://localhost:8000/api/v1/annonces
+http://localhost:8000/api/v1/annonces/2
+
+
 **Étape 4 — Test via Swagger (40 min)**
 1. Ouvrir `http://localhost:8000/docs`
 2. Tester chaque route via l'interface interactive
@@ -435,10 +444,10 @@ app.include_router(
 4. Tester les filtres de la liste
 
 ### ✅ Critères de validation
-- [ ] L'API démarre sans erreur
-- [ ] `/docs` affiche toutes les routes documentées
-- [ ] Un 404 est retourné pour un ID inexistant
-- [ ] Les filtres fonctionnent sur `/annonces`
+- [X] L'API démarre sans erreur
+- [X] `/docs` affiche toutes les routes documentées
+- [X] Un 404 est retourné pour un ID inexistant
+- [X] Les filtres fonctionnent sur `/annonces`
 - [ ] Un `POST` sur `/annonces` ajoute bien l'annonce à la liste
 
 ---
@@ -522,7 +531,7 @@ class AnnonceBase(BaseModel):
     @validator("titre")
     def titre_ne_peut_pas_etre_vide(cls, v):
         if v.strip() == "":
-            raise ValueError("Le titre ne peut pas être vide ou des espaces")
+            raise ValueError("Le titre ne peut pas être vide ou il ne peux pas avoir non plus que des espaces")
         return v.strip()  # On nettoie les espaces en bord
 
 # Schéma pour la CRÉATION (entrée)
@@ -693,10 +702,10 @@ async def validation_exception_handler(request, exc):
 ```
 
 ### ✅ Critères de validation
-- [ ] Un POST avec données invalides retourne un 422 clair
-- [ ] Les `response_model` masquent le mot de passe dans les réponses utilisateur
-- [ ] `PATCH /annonces/{id}` ne modifie que les champs fournis
-- [ ] La documentation Swagger affiche les exemples définis dans les schémas
+- [X] Un POST avec données invalides retourne un 422 clair
+- [X] Les `response_model` masquent le mot de passe dans les réponses utilisateur
+- [X] `PATCH /annonces/{id}` ne modifie que les champs fournis
+- [X] La documentation Swagger affiche les exemples définis dans les schémas
 
 ---
 

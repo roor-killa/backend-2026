@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import annonces
+from app.database import engine, Base
+import app.models.annonce  # noqa: F401 — enregistre le modèle auprès de Base
+import app.models.utilisateur  # noqa: F401
+
+# Création des tables en base de données au démarrage
+Base.metadata.create_all(bind=engine)
 
 # Création de l'application
 app = FastAPI(
