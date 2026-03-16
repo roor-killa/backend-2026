@@ -58,12 +58,7 @@ class AnnonceBase(BaseModel):
 
 
 class AnnonceCreate(AnnonceBase):
-    proprietaire_id: int = Field(
-        ...,
-        gt=0,
-        description="Identifiant de l'utilisateur proprietaire",
-        examples=[1],
-    )
+    pass
 
 
 class AnnonceUpdate(BaseModel):

@@ -2,15 +2,9 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.database import init_db
-from app.routers import annonces, utilisateurs
+from app.routers import annonces, auth, utilisateurs
 
 app = FastAPI(title="KaribMarket API", version="1.0.0")
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    init_db()
 
 
 @app.exception_handler(RequestValidationError)
@@ -51,4 +45,9 @@ app.include_router(
     utilisateurs.router,
     prefix="/api/v1",
     tags=["Utilisateurs"],
+)
+
+app.include_router(
+    auth.router,
+    prefix="/api/v1",
 )

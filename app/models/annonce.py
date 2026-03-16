@@ -29,5 +29,5 @@ class Annonce(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    proprietaire_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    proprietaire = relationship("User", back_populates="annonces")
+    proprietaire_id: Mapped[int] = mapped_column(ForeignKey("utilisateurs.id"), nullable=False)
+    proprietaire = relationship("Utilisateur", back_populates="annonces")
