@@ -16,7 +16,8 @@ annonces = [
         "description": "Vélo confortable idéal pour les déplacements en ville.",
         "prix": 120,
         "commune": "Fort-de-France",
-        "categorie": "Sport"
+        "categorie": "loisirs",
+        "created_at": datetime.now()
     },
     {
         "id": 2,
@@ -24,7 +25,8 @@ annonces = [
         "description": "Canapé gris très confortable, peu utilisé.",
         "prix": 250,
         "commune": "Le Lamentin",
-        "categorie": "Maison"
+        "categorie": "immobilier",
+        "created_at": datetime.now()
     },
     {
         "id": 3,
@@ -32,7 +34,8 @@ annonces = [
         "description": "iPhone en bon état avec chargeur et coque.",
         "prix": 400,
         "commune": "Schoelcher",
-        "categorie": "Électronique"
+        "categorie": "autre",
+        "created_at": datetime.now()
     },
     {
         "id": 4,
@@ -40,7 +43,8 @@ annonces = [
         "description": "Grande table en bois massif pour 6 personnes.",
         "prix": 180,
         "commune": "Ducos",
-        "categorie": "Maison"
+        "categorie": "immobilier",
+        "created_at": datetime.now()
     },
     {
         "id": 5,
@@ -48,9 +52,11 @@ annonces = [
         "description": "Guitare parfaite pour débutant, vendue avec housse.",
         "prix": 90,
         "commune": "Saint-Joseph",
-        "categorie": "Musique"
+        "categorie": "loisirs",
+        "created_at": datetime.now()
     }
 ]
+
 
 compteur_id = 1
 
