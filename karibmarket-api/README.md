@@ -2,3 +2,4 @@
 - venv\Scripts\activate
 - pip install fastapi uvicorn[standard]
 - uvicorn app.main:app --reload --port 8000
+- python -m uvicorn app.main:app --reload --port 8000

@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Path, Query, status
 from typing import Optional
 from datetime import datetime
-
 from app.schemas.annonce import (
     AnnonceCreate,
     AnnonceUpdate,
@@ -10,7 +9,48 @@ from app.schemas.annonce import (
 
 router = APIRouter()
 
-annonces = []
+annonces = [
+    {
+        "id": 1,
+        "titre": "Vélo de ville en bon état",
+        "description": "Vélo confortable idéal pour les déplacements en ville.",
+        "prix": 120,
+        "commune": "Fort-de-France",
+        "categorie": "Sport"
+    },
+    {
+        "id": 2,
+        "titre": "Canapé 3 places",
+        "description": "Canapé gris très confortable, peu utilisé.",
+        "prix": 250,
+        "commune": "Le Lamentin",
+        "categorie": "Maison"
+    },
+    {
+        "id": 3,
+        "titre": "iPhone 11 128Go",
+        "description": "iPhone en bon état avec chargeur et coque.",
+        "prix": 400,
+        "commune": "Schoelcher",
+        "categorie": "Électronique"
+    },
+    {
+        "id": 4,
+        "titre": "Table à manger en bois",
+        "description": "Grande table en bois massif pour 6 personnes.",
+        "prix": 180,
+        "commune": "Ducos",
+        "categorie": "Maison"
+    },
+    {
+        "id": 5,
+        "titre": "Guitare acoustique",
+        "description": "Guitare parfaite pour débutant, vendue avec housse.",
+        "prix": 90,
+        "commune": "Saint-Joseph",
+        "categorie": "Musique"
+    }
+]
 
 compteur_id = 1
 
