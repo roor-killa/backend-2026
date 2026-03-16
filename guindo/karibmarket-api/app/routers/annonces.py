@@ -1,42 +1,26 @@
-from fastapi import APIRouter, HTTPException, status
-from typing import List
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Depends, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
 
-from app.schemas.annonce import (
-    AnnonceCreate,
-    AnnonceUpdate,
-    AnnonceResponse
-)
+from app.database import get_db
+from app.models.annonce import Annonce
+from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
 
 router = APIRouter()
-
-annonces_db = []
-compteur_id = 1
 
 
 # ----------------------------
 # CREATE annonce
 # ----------------------------
-@router.post(
-    "/annonces",
-    response_model=AnnonceResponse,
-    status_code=status.HTTP_201_CREATED
-)
-def create_annonce(annonce: AnnonceCreate):
-
-    global compteur_id
-
-    nouvelle_annonce = {
-        "id": compteur_id,
-        **annonce.model_dump(),
-        "actif": True,
-        "created_at": datetime.now(),
-        "updated_at": None
-    }
-
-    annonces_db.append(nouvelle_annonce)
-    compteur_id += 1
-
+@router.post("/annonces", response_model=AnnonceResponse, status_code=status.HTTP_201_CREATED)
+def create_annonce(
+        annonce: AnnonceCreate,
+        db: Session = Depends(get_db)
+):
+    nouvelle_annonce = Annonce(**annonce.model_dump())
+    db.add(nouvelle_annonce)
+    db.commit()
+    db.refresh(nouvelle_annonce)
     return nouvelle_annonce
 
 
@@ -44,65 +28,61 @@ def create_annonce(annonce: AnnonceCreate):
 # LIST annonces
 # ----------------------------
 @router.get("/annonces", response_model=List[AnnonceResponse])
-def list_annonces():
+def list_annonces(
+    commune: Optional[str] = Query(None),
+    categorie: Optional[str] = Query(None),
+    page: int = Query(1, gt=0),
+    limit: int = Query(10, gt=0, le=100),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Annonce).filter(Annonce.actif == True)
 
-    return annonces_db
+    if commune:
+        query = query.filter(Annonce.commune.ilike(f"%{commune}%"))
+    if categorie:
+        query = query.filter(Annonce.categorie == categorie)
+
+    annonces = query.offset((page - 1) * limit).limit(limit).all()
+    return annonces
 
 
 # ----------------------------
 # GET annonce par id
 # ----------------------------
 @router.get("/annonces/{annonce_id}", response_model=AnnonceResponse)
-def get_annonce(annonce_id: int):
-
-    for annonce in annonces_db:
-        if annonce["id"] == annonce_id:
-            return annonce
-
-    raise HTTPException(
-        status_code=404,
-        detail="Annonce introuvable"
-    )
+def get_annonce(annonce_id: int, db: Session = Depends(get_db)):
+    annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
+    if not annonce:
+        raise HTTPException(status_code=404, detail="Annonce introuvable")
+    return annonce
 
 
 # ----------------------------
 # UPDATE annonce
 # ----------------------------
 @router.patch("/annonces/{annonce_id}", response_model=AnnonceResponse)
-def update_annonce(annonce_id: int, modifications: AnnonceUpdate):
+def update_annonce(annonce_id: int, modifications: AnnonceUpdate, db: Session = Depends(get_db)):
+    annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
+    if not annonce:
+        raise HTTPException(status_code=404, detail="Annonce introuvable")
 
-    for annonce in annonces_db:
+    changements = modifications.model_dump(exclude_unset=True)
+    for champ, valeur in changements.items():
+        setattr(annonce, champ, valeur)
 
-        if annonce["id"] == annonce_id:
-
-            changements = modifications.model_dump(exclude_unset=True)
-
-            annonce.update(changements)
-            annonce["updated_at"] = datetime.now()
-
-            return annonce
-
-    raise HTTPException(
-        status_code=404,
-        detail="Annonce introuvable"
-    )
+    db.commit()
+    db.refresh(annonce)
+    return annonce
 
 
 # ----------------------------
-# DELETE annonce
+# DELETE annonce (soft delete)
 # ----------------------------
-@router.delete("/annonces/{annonce_id}")
-def delete_annonce(annonce_id: int):
+@router.delete("/annonces/{annonce_id}", status_code=204)
+def delete_annonce(annonce_id: int, db: Session = Depends(get_db)):
+    annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
+    if not annonce:
+        raise HTTPException(status_code=404, detail="Annonce introuvable")
 
-    for i, annonce in enumerate(annonces_db):
-
-        if annonce["id"] == annonce_id:
-
-            annonces_db.pop(i)
-
-            return {"message": "Annonce supprimée"}
-
-    raise HTTPException(
-        status_code=404,
-        detail="Annonce introuvable"
-    )
+    annonce.actif = False
+    db.commit()
