@@ -752,6 +752,15 @@ SECRET_KEY=une-cle-secrete-tres-longue-et-aleatoire
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
+Créer la base de données
+Créer l'utilisateur et la base PostgreSQL (si pas encore fait) :
+
+  psql postgres
+  CREATE USER karib WITH PASSWORD 'karib_pass';
+  CREATE DATABASE karibmarket OWNER karib;
+  \q
+
+  Ensuite relancez uvicorn app.main:app --reload.
 
 ### `app/database.py`
 
@@ -1029,9 +1038,9 @@ Un JWT est un **token signé** qui prouve l'identité d'un utilisateur sans avoi
 HEADER.PAYLOAD.SIGNATURE
 
 eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJpZUBleGFtcGxlLmNvbSIsImV4cCI6MTcwNjcxMjAwMH0.abc123
-      ↑                          ↑                                                          ↑
-Algorithme de                 Données                                                  Signature
-  signature                 (claims)                                                   HMAC-SHA256
+      ↑                          ↑                                                  ↑
+Algorithme de                 Données                                            Signature
+  signature                 (claims)                                             HMAC-SHA256
 ```
 
 **Structure du payload :**
@@ -1231,11 +1240,11 @@ Tester via Swagger : s'inscrire, se connecter, récupérer le token.
 - `GET /annonces` et `GET /annonces/{id}` → rester publics
 
 **Étape 4 — Test du flux complet (15 min)**
-1. Créer un compte → `/auth/register`
-2. Se connecter → `/auth/login` → copier le token
-3. Dans Swagger, cliquer "Authorize" et coller le token
-4. Créer une annonce → `POST /annonces` (doit marcher)
-5. Tenter de supprimer l'annonce d'un autre → doit retourner 403
+1. Créer un compte → `/auth/register` [POST /api/v1/auth/register → créer un compte]
+2. Se connecter → `/auth/login` → copier le token [POST /api/v1/auth/login → récupérer le token]
+3. Dans Swagger, cliquer "Authorize" et coller le token [Cliquer Authorize en haut de Swagger → coller le token]
+4. Créer une annonce → `POST /annonces` (doit marcher) [POST /api/v1/annonces → doit fonctionner]
+5. Tenter de supprimer l'annonce d'un autre → doit retourner 403 [DELETE /api/v1/annonces/{id} d'un autre user → doit retourner 403]
 
 ### ✅ Critères de validation
 - [ ] Impossible de créer une annonce sans token → 401

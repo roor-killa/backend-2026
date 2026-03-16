@@ -2,8 +2,10 @@ from fastapi import APIRouter, Path, Query, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
 from app.models.annonce import Annonce
+from app.models.utilisateur import Utilisateur
 import app.models.utilisateur  # noqa: F401 — nécessaire pour résoudre la relation ORM
 from app.database import get_db
+from app.routers.auth import get_current_user
 from typing import Optional, List
 
 router = APIRouter()
@@ -15,7 +17,11 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
     summary="Créer une nouvelle annonce"
 )
-def create_annonce(annonce: AnnonceCreate, db: Session = Depends(get_db)):
+def create_annonce(
+    annonce: AnnonceCreate,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
+):
     """
     Crée une nouvelle annonce dans KaribMarket.
 
@@ -24,7 +30,7 @@ def create_annonce(annonce: AnnonceCreate, db: Session = Depends(get_db)):
     - **commune** : Commune de Martinique ou Guadeloupe
     - **categorie** : alimentaire, services, loisirs, immobilier, vehicules, autre
     """
-    nouvelle_annonce = Annonce(**annonce.model_dump())
+    nouvelle_annonce = Annonce(**annonce.model_dump(), proprietaire_id=current_user.id)
     db.add(nouvelle_annonce)
     db.commit()
     db.refresh(nouvelle_annonce)
@@ -79,14 +85,22 @@ def get_annonce(
 @router.delete("/annonces/{annonce_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_annonce(
     annonce_id: int = Path(..., gt=0, description="ID de l'annonce à supprimer"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
 ):
     """
-    Supprime une annonce par son identifiant.
+    Supprime une annonce par son identifiant. Réservé au propriétaire.
     """
     annonce = db.get(Annonce, annonce_id)
     if not annonce:
         raise HTTPException(status_code=404, detail=f"Annonce {annonce_id} introuvable")
+
+    if annonce.proprietaire_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous ne pouvez supprimer que vos propres annonces"
+        )
+
     db.delete(annonce)
     db.commit()
 
