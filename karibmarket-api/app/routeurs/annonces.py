@@ -13,6 +13,8 @@ from app.schemas.annonce import (
     CategorieAnnonce,
 )
 
+from app.routers.auth import get_current_user
+from app.models.utilisateur import Utilisateur
 
 router = APIRouter()
 
@@ -47,11 +49,15 @@ def list_annonces(
 def create_annonce(
     annonce_data: AnnonceCreate,
     db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)  # ← Requiert une auth
 ):
     payload = annonce_data.model_dump()
     payload["categorie"] = to_model_categorie(annonce_data.categorie)
 
-    nouvelle_annonce = Annonce(**payload)
+    nouvelle_annonce = Annonce(
+        **annonce_data.model_dump(),
+        proprietaire_id=current_user.id  # Lier l'annonce à l'utilisateur connecté
+    )
     db.add(nouvelle_annonce)
     db.commit()
     db.refresh(nouvelle_annonce)
@@ -89,10 +95,16 @@ def update_annonce(
 
 
 @router.delete("/annonces/{annonce_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_annonce(annonce_id: int, db: Session = Depends(get_db)):
+def delete_annonce(annonce_id: int, db: Session = Depends(get_db), current_user: Utilisateur = Depends(get_current_user)):
     annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
     if not annonce or not annonce.actif:
         raise HTTPException(status_code=404, detail="Annonce introuvable")
+    
+    if annonce.proprietaire_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous ne pouvez supprimer que vos propres annonces"
+        )
 
     annonce.actif = False
     db.commit()
