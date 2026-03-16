@@ -18,9 +18,11 @@ def create_annonce(
         db: Session = Depends(get_db)
 ):
     nouvelle_annonce = Annonce(**annonce.model_dump())
+
     db.add(nouvelle_annonce)
     db.commit()
     db.refresh(nouvelle_annonce)
+
     return nouvelle_annonce
 
 
@@ -35,14 +37,17 @@ def list_annonces(
     limit: int = Query(10, gt=0, le=100),
     db: Session = Depends(get_db)
 ):
+
     query = db.query(Annonce).filter(Annonce.actif == True)
 
     if commune:
         query = query.filter(Annonce.commune.ilike(f"%{commune}%"))
+
     if categorie:
         query = query.filter(Annonce.categorie == categorie)
 
     annonces = query.offset((page - 1) * limit).limit(limit).all()
+
     return annonces
 
 
@@ -51,9 +56,15 @@ def list_annonces(
 # ----------------------------
 @router.get("/annonces/{annonce_id}", response_model=AnnonceResponse)
 def get_annonce(annonce_id: int, db: Session = Depends(get_db)):
+
     annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
+
     if not annonce:
-        raise HTTPException(status_code=404, detail="Annonce introuvable")
+        raise HTTPException(
+            status_code=404,
+            detail="Annonce introuvable"
+        )
+
     return annonce
 
 
@@ -61,17 +72,28 @@ def get_annonce(annonce_id: int, db: Session = Depends(get_db)):
 # UPDATE annonce
 # ----------------------------
 @router.patch("/annonces/{annonce_id}", response_model=AnnonceResponse)
-def update_annonce(annonce_id: int, modifications: AnnonceUpdate, db: Session = Depends(get_db)):
+def update_annonce(
+        annonce_id: int,
+        modifications: AnnonceUpdate,
+        db: Session = Depends(get_db)
+):
+
     annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
+
     if not annonce:
-        raise HTTPException(status_code=404, detail="Annonce introuvable")
+        raise HTTPException(
+            status_code=404,
+            detail="Annonce introuvable"
+        )
 
     changements = modifications.model_dump(exclude_unset=True)
+
     for champ, valeur in changements.items():
         setattr(annonce, champ, valeur)
 
     db.commit()
     db.refresh(annonce)
+
     return annonce
 
 
@@ -80,9 +102,14 @@ def update_annonce(annonce_id: int, modifications: AnnonceUpdate, db: Session = 
 # ----------------------------
 @router.delete("/annonces/{annonce_id}", status_code=204)
 def delete_annonce(annonce_id: int, db: Session = Depends(get_db)):
+
     annonce = db.query(Annonce).filter(Annonce.id == annonce_id).first()
+
     if not annonce:
-        raise HTTPException(status_code=404, detail="Annonce introuvable")
+        raise HTTPException(
+            status_code=404,
+            detail="Annonce introuvable"
+        )
 
     annonce.actif = False
     db.commit()
