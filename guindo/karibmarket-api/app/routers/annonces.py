@@ -6,6 +6,9 @@ from app.database import get_db
 from app.models.annonce import Annonce
 from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
 
+from app.routers.auth import get_current_user
+from app.models.utilisateur import Utilisateur
+
 router = APIRouter()
 
 
@@ -14,10 +17,15 @@ router = APIRouter()
 # ----------------------------
 @router.post("/annonces", response_model=AnnonceResponse, status_code=status.HTTP_201_CREATED)
 def create_annonce(
-        annonce: AnnonceCreate,
-        db: Session = Depends(get_db)
+    annonce: AnnonceCreate,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user)
 ):
-    nouvelle_annonce = Annonce(**annonce.model_dump())
+
+    nouvelle_annonce = Annonce(
+        **annonce.model_dump(),
+        proprietaire_id=current_user.id
+    )
 
     db.add(nouvelle_annonce)
     db.commit()
