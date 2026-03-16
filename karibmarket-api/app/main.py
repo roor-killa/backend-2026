@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import annonces
+from app.routers import auth
 from app.database import engine, Base
 import app.models.annonce  # noqa: F401 — enregistre le modèle auprès de Base
 import app.models.utilisateur  # noqa: F401
@@ -26,11 +27,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router 
+# Routers
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(
     annonces.router,
     prefix="/api/v1",
-    tags=["Annonces"]  # Groupe dans la doc Swagger
+    tags=["Annonces"]
 )
 
 # Route de base — vérification que l'API fonctionne
