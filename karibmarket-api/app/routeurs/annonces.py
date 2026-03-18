@@ -13,7 +13,7 @@ from app.schemas.annonce import (
     CategorieAnnonce,
 )
 
-from app.routers.auth import get_current_user
+from app.routeurs.auth import get_current_user
 from app.models.utilisateur import Utilisateur
 
 router = APIRouter()

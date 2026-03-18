@@ -1,6 +1,6 @@
 
 from pydantic import BaseModel, EmailStr, Field
-from typing import List
+from typing import List, Optional
 from app.schemas.annonce import AnnonceResponse
 
 class UtilisateurBase(BaseModel):
