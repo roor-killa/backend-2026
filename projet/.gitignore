@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environnement virtuel
+venv/
+.venv/
+env/
+
+# Données scrapées (ne pas commiter les données brutes)
+data/raw/
+data/processed/
+data/cache/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+notebooks/*.local.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Coverage
+.coverage
+htmlcov/
+
+# Variables d'environnement
+.env

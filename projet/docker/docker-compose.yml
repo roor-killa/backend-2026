@@ -1,0 +1,51 @@
+services:
+  # Service principal : scraper Kiprix
+  scraper:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../data:/app/data # Partage le dossier data avec l'hôte
+    # Commande par défaut : scraper 10 pages en Martinique 
+    command: scrape --pages 10 --territory mq
+    environment:
+      - DB_HOST=postgres_db
+      - DB_USER=laravel
+      - DB_PASS=secret
+      - DB_NAME=kiprix_db
+    networks:
+      - infra_app_network
+
+  # Service optionnel : Jupyter pour l'analyse (Membre 2)
+  # Utilise l'image officielle Jupyter qui a tout le nécessaire
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../data:/home/jovyan/data
+      - ../notebooks:/home/jovyan/notebooks
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+
+  # Service interface graphique : Streamlit
+  streamlit:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ..:/app
+    entrypoint: ["python", "-m", "streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    environment:
+      - DB_HOST=postgres_db
+      - DB_USER=laravel
+      - DB_PASS=secret
+      - DB_NAME=kiprix_db
+    networks:
+      - infra_app_network
+
+networks:
+  infra_app_network:
+    external: true

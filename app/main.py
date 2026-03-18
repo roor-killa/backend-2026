@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.routers import annonces, auth, utilisateurs
+from app.routers import annonces, auth, produits_kiprix, utilisateurs
 
 app = FastAPI(title="KaribMarket API", version="1.0.0")
 
@@ -50,4 +50,10 @@ app.include_router(
 app.include_router(
     auth.router,
     prefix="/api/v1",
+)
+
+app.include_router(
+    produits_kiprix.router,
+    prefix="/api/v1",
+    tags=["Produits Kiprix"],
 )

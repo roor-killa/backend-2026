@@ -1,0 +1,70 @@
+@startuml
+' --- classes principales ---
+
+class BaseScraper {
+  - base_url: str
+  - delay: float
+  - headers: dict
+  - data: List[Dict]
+  - logger: Logger
+  + __init__(base_url: str, delay: float = 1.5)
+  + fetch_page(url: str): Optional[BeautifulSoup]
+  + save_to_json(filename: str): None
+  + save_to_csv(filename: str): None
+  {abstract} + scrape(max_pages: int = 1): List[Dict]
+  {abstract} + parse(soup: BeautifulSoup): List[Dict]
+}
+
+class KiprixScraper {
+  + TERRITORIES: Dict[str, str]
+  - territory: str
+  + __init__(territory: str = 'gp', delay: float = 1.5)
+  + scrape(max_pages: int = 10): List[Dict]
+  + parse(soup: BeautifulSoup): List[Dict]
+  + get_products_by_category(category: str): List[Dict]
+  + get_average_price_difference(): float
+  + scrape_all_territories(max_pages: int = 5): List[Dict]
+}
+
+BaseScraper <|-- KiprixScraper
+
+class ScraperManager {
+  + SCRAPERS: Dict[str, type]
+  + create_scraper(name: str, **kwargs): BaseScraper
+  + scrape_all(max_pages: int = 5, parallel: bool = false, max_workers: int = 2): Dict[str, List[Dict]]
+  - _scrape_sequential(max_pages: int): Dict[str, List[Dict]]
+  - _scrape_parallel(max_pages: int, max_workers: int): Dict[str, List[Dict]]
+}
+
+class CacheManager {
+  - cache_dir: Path
+  - max_age: int
+  - logger: Logger
+  + __init__(cache_dir: str = "data/cache", max_age: int = 3600)
+  - _url_to_hash(url: str): str
+  + get_cached_page(url: str): Optional[str]
+  + cache_page(url: str, content: str): None
+  + clear_old_cache(): int
+  + clear_all_cache(): None
+  + get_stats(): dict
+}
+
+class DataAnalyzer {
+  - df: Optional[pd.DataFrame]
+  - logger: Logger
+  + __init__()
+  + load_from_json(filepath: str): None
+  + descriptive_stats(): Dict[str, Any]
+  + detect_price_trends(): Dict[str, Any]
+  + export_to_excel(filename: str): None
+  + export_to_csv(filename: str): None
+  + get_summary_report(): str
+}
+
+' --- dépendances / relations d'utilisation ---
+
+ScraperManager ..> BaseScraper : creates
+ScraperManager ..> KiprixScraper
+
+
+@enduml
