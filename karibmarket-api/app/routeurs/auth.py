@@ -4,12 +4,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.utilisateur import Utilisateur
 from app.schemas.utilisateur import UtilisateurCreate, UtilisateurResponse
-from app.services.auth_service import hash_password, verify_password, create_access_token
+from app.services.auth_service import hash_password, verify_password, create_access_token, decode_token
 
 router = APIRouter(prefix="/auth", tags=["Authentification"])
 
 # Schéma OAuth2 — indique à FastAPI où chercher le token
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.post("/register", response_model=UtilisateurResponse, status_code=201)
 def register(user_data: UtilisateurCreate, db: Session = Depends(get_db)):

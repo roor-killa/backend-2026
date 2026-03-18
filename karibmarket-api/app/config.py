@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings  # pip install pydantic-settings
 
 class Settings(BaseSettings):
     # Base de données
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/karibmarket"
+    DATABASE_URL: str = "postgresql://karib:karib_pass@localhost:5433/karibmarket"
 
     # JWT (Module 5)
     SECRET_KEY: str = "changez-moi-en-production"

@@ -1,19 +1,20 @@
 
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from app.config import settings
-
-# Contexte de hachage des mots de passe
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(mot_de_passe: str) -> str:
     """Hacher un mot de passe — JAMAIS stocker en clair"""
-    return pwd_context.hash(mot_de_passe)
+    hashed = bcrypt.hashpw(mot_de_passe.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 def verify_password(mot_de_passe: str, hashed: str) -> bool:
     """Vérifier qu'un mot de passe correspond au hash stocké"""
-    return pwd_context.verify(mot_de_passe, hashed)
+    try:
+        return bcrypt.checkpw(mot_de_passe.encode("utf-8"), hashed.encode("utf-8"))
+    except ValueError:
+        return False
 
 def create_access_token(data: dict) -> str:
     """Créer un JWT signé"""

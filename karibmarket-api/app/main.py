@@ -3,6 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routeurs.annonces import router as annonces_router
+from app.routeurs.auth import router as auth_router
+from app.database import Base, engine
+from app import models  # noqa: F401
 
 # Création de l'application
 app = FastAPI(
@@ -13,8 +16,12 @@ app = FastAPI(
     redoc_url="/redoc"        # Interface ReDoc (documentation lisible)
 )
 
+# Crée les tables si elles n'existent pas encore
+Base.metadata.create_all(bind=engine)
+
 # Enregistrement des routeurs
 app.include_router(annonces_router)
+app.include_router(auth_router)
 
 # Configuration CORS — autorise le frontend à appeler l'API
 app.add_middleware(
