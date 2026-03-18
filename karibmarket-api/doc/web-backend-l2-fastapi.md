@@ -1247,10 +1247,10 @@ Tester via Swagger : s'inscrire, se connecter, récupérer le token.
 5. Tenter de supprimer l'annonce d'un autre → doit retourner 403 [DELETE /api/v1/annonces/{id} d'un autre user → doit retourner 403]
 
 ### ✅ Critères de validation
-- [ ] Impossible de créer une annonce sans token → 401
-- [ ] Impossible de supprimer l'annonce d'autrui → 403
-- [ ] Un token expiré retourne 401
-- [ ] Le mot de passe n'apparaît jamais dans une réponse API
+- [X] Impossible de créer une annonce sans token → 401
+- [X] Impossible de supprimer l'annonce d'autrui → 403
+- [X] Un token expiré retourne 401
+- [X] Le mot de passe n'apparaît jamais dans une réponse API
 
 ---
 
