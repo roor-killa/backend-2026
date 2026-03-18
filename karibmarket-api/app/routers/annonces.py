@@ -54,7 +54,7 @@ annonces_db = [
 ]
 
 
-compteur_id = 1
+compteur_id = 6
 
 
 @router.get("/", response_model=list[AnnonceResponse])
