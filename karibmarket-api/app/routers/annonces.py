@@ -1,22 +1,44 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends
+from app.schemas.annonce import AnnonceCreate
+from app.routers.auth import get_current_user
 
 router = APIRouter()
 
-annonces = [
-    {"id":1,"titre":"Mangues bio","prix":3.5,"commune":"Le Lamentin"},
-    {"id":2,"titre":"Cours de yoga","prix":20,"commune":"Sainte-Anne"}
-]
+annonces = []
 
+# GET ALL
 @router.get("/annonces")
-def list_annonces():
+def get_all():
     return annonces
 
-
+# GET ONE
 @router.get("/annonces/{id}")
-def get_annonce(id:int):
+def get_one(id: int):
+    for a in annonces:
+        if a["id"] == id:
+            return a
+    raise HTTPException(404, "Introuvable")
 
-    for annonce in annonces:
-        if annonce["id"] == id:
-            return annonce
+# CREATE (PROTÉGÉ)
+@router.post("/annonces")
+def create(annonce: AnnonceCreate, user=Depends(get_current_user)):
+    new = annonce.model_dump()
+    new["id"] = len(annonces) + 1
+    new["owner"] = user["id"]
 
-    return {"error":"Annonce introuvable"}
+    annonces.append(new)
+    return new
+
+# DELETE (PROTÉGÉ)
+@router.delete("/annonces/{id}")
+def delete(id: int, user=Depends(get_current_user)):
+    for a in annonces:
+        if a["id"] == id:
+
+            if a["owner"] != user["id"]:
+                raise HTTPException(403, "interdit")
+
+            annonces.remove(a)
+            return {"message": "supprimé"}
+
+    raise HTTPException(404, "introuvable")
