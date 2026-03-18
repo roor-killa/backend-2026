@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import annonces
+from app.routers import annonces, auth
 
 # Création de l'application FastAPI
 app = FastAPI(
@@ -14,6 +14,14 @@ app.include_router(
     prefix="/api/v1",
     tags=["Annonces"]
 )
+
+# On connecte le fichier auth.py pour l'authentification
+app.include_router(
+    auth.router,
+    prefix="/api/v1",
+    tags=["Authentification"]
+)
+
 
 # Route d'accueil basique
 @app.get("/")
