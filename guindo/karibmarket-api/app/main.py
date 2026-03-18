@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.routers import annonces
 from app.routers import auth
+from app.routers import prix
 
 app = FastAPI(
     title="KaribMarket API",
@@ -23,5 +24,10 @@ app.include_router(
 
 app.include_router(
     auth.router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    prix.router, 
     prefix="/api/v1"
 )
