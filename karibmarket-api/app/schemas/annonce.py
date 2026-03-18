@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -20,7 +20,7 @@ class AnnonceBase(BaseModel):
     commune: str = Field(..., example="Le Lamentin")
     categorie: CategorieAnnonce = CategorieAnnonce.autre
 
-    @validator("titre")
+    @field_validator("titre")
     def titre_valide(cls, v):
         if v.strip() == "":
             raise ValueError("Le titre ne peut pas être vide")
