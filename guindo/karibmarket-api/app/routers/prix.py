@@ -26,7 +26,7 @@ def list_produits(
         query = query.filter(Produit.name.ilike(f"%{search}%"))
 
     if territory:
-        query = query.filter(Produit.territory == territory.upper())
+        query = query.filter(Produit.territory == territory.lower())
 
     total = query.count()
     produits = query.offset((page - 1) * limit).limit(limit).all()
