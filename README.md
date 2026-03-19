@@ -1,4 +1,0 @@
-# backend-2026
-
-
-venv\Scripts\activate puis uvicorn app.main:app --reload --port 8000 pour lancer
