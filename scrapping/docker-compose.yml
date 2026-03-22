@@ -1,31 +1,31 @@
 services:
   postgres:
     image: postgres:15
-    container_name: karib-postgres
+    container_name: scrapping-api-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: karib
-      POSTGRES_PASSWORD: karib_pass
-      POSTGRES_DB: karibmarket
+      POSTGRES_USER: scrapping_api
+      POSTGRES_PASSWORD: scrapping_api
+      POSTGRES_DB: scrapping_api
     ports:
-      - "5434:5434"
+      - "5434:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_scrapping:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U karib -d karibmarket"]
+      test: ["CMD-SHELL", "pg_isready -U scrapping_api -d scrapping_api"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: karib-pgadmin
+    container_name: scrapping-api-pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@gmail.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:5050"
+      - "5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -33,5 +33,5 @@ services:
         condition: service_healthy
 
 volumes:
-  postgres_data:
+  postgres_data_scrapping:
   pgadmin_data:
