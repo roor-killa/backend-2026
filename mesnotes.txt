@@ -1,2 +1,8 @@
 
 venv\Scripts\activate puis uvicorn app.main:app --reload --port 8000 pour lancer
+
+
+
+
+
+pip freeze > requirements.txt -> Permet de creer automatiquement le fichier requirements.txt avec les package requis
