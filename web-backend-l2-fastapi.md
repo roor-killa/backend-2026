@@ -1,4 +1,27 @@
-# Web Backend — Licence 2ème année
+from pydantic import BaseModel, Field
+from typing import Optional
+from enum import Enum
+
+class CategorieAnnonce(str, Enum):
+    ALIMENTAIRE = "alimentaire"
+    SERVICES = "services"
+    LOISIRS = "loisirs"
+    IMMOBILIER = "immobilier"
+    VEHICULES = "vehicules"
+    AUTRE = "autre"
+
+class AnnonceBase(BaseModel):
+    titre: str = Field(..., min_length=5)
+    description: Optional[str] = None
+    prix: float = Field(..., gt=0)
+    commune: str
+    categorie: CategorieAnnonce
+
+class AnnonceCreate(AnnonceBase):
+    pass
+
+class AnnonceResponse(AnnonceBase):
+    id: int# Web Backend — Licence 2ème année
 ## FastAPI & Python : Construire des APIs Professionnelles
 
 > **Université des Antilles — Département Informatique**  
