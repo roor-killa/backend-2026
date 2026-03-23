@@ -3,3 +3,6 @@
 - pip install fastapi uvicorn[standard]
 - uvicorn app.main:app --reload --port 8000
 - python -m uvicorn app.main:app --reload --port 8000
+- psql postgres
+- CREATE USER karib WITH PASSWORD 'karib_pass'
+- CREATE DATABASE karibmarket OWNER karib
