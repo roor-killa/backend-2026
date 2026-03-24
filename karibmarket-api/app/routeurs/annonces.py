@@ -16,11 +16,29 @@ from app.schemas.annonce import (
 from app.routeurs.auth import get_current_user
 from app.models.utilisateur import Utilisateur
 
+
+#les imports asynchrone
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+
+from fastapi import BackgroundTasks
+import smtplib
+from email.mime.text import MIMEText
+
 router = APIRouter()
 
 
 def to_model_categorie(categorie: CategorieAnnonce) -> CategorieEnum:
     return CategorieEnum(categorie.value)
+
+def envoyer_email_confirmation(email: str, titre_annonce: str):
+    """Tâche qui s'exécute après avoir répondu au client"""
+    print(f"📧 Envoi email de confirmation à {email} pour '{titre_annonce}'")
+    # Logique d'envoi d'email ici (simulée)
+    # En production : utiliser une bibliothèque comme fastapi-mail
+
+def notifier_moderateurs(annonce_id: int):
+    """Notifier les modérateurs d'une nouvelle annonce à valider"""
+    print(f"🔔 Nouvelle annonce #{annonce_id} à modérer")
 
 
 @router.get("/annonces", response_model=List[AnnonceResponse])
@@ -38,7 +56,7 @@ def list_annonces(
     if categorie:
         query = query.filter(Annonce.categorie == to_model_categorie(categorie))
 
-    return query.offset((page - 1) * limit).limit(limit).all()
+    return db.query(Annonce).all()
 
 
 @router.post(
@@ -46,11 +64,12 @@ def list_annonces(
     response_model=AnnonceResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_annonce(
+async def create_annonce(
     annonce_data: AnnonceCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(get_current_user)  # ← Requiert une auth
-):
+):  
     payload = annonce_data.model_dump()
     payload["categorie"] = to_model_categorie(annonce_data.categorie)
 
@@ -61,6 +80,10 @@ def create_annonce(
     db.add(nouvelle_annonce)
     db.commit()
     db.refresh(nouvelle_annonce)
+
+    background_tasks.add_task(envoyer_email_confirmation, current_user.email, annonce_data.titre)
+    background_tasks.add_task(notifier_moderateurs, nouvelle_annonce.id)
+
     return nouvelle_annonce
 
 

@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: scrapping_api
       POSTGRES_DB: scrapping_api
     ports:
-      - "5434:5432"
+      - "5435:5432"
     volumes:
       - postgres_data_scrapping:/var/lib/postgresql/data
     healthcheck:

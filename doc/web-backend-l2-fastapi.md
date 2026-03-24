@@ -1264,9 +1264,7 @@ async def get_annonce_async(annonce_id: int):
 ```python
 # ✅ Utiliser async pour : I/O (réseau, BDD, fichiers)
 @router.get("/annonces/{id}")
-async def get_annonce(id: int):
-    # Requête vers un service externe
-    async with httpx.AsyncClient() as client:
+async def get_annonce(id: int)  as client:
         response = await client.get(f"https://api-externe.com/annonces/{id}")
     return response.json()
 
