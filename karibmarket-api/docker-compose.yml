@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: karibmarket-db
+    environment:
+      POSTGRES_USER: karib
+      POSTGRES_PASSWORD: karib_pass
+      POSTGRES_DB: karibmarket
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U karib -d karibmarket"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: karibmarket-api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://karib:karib_pass@db:5432/karibmarket
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
