@@ -1,19 +1,27 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from fastapi import APIRouter, HTTPException, Depends, Query, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import time
 
 from app.database import get_db
 from app.models.annonce import Annonce
 from app.models.utilisateur import Utilisateur
 from app.schemas.annonce import AnnonceCreate, AnnonceUpdate, AnnonceResponse
+from fastapi_cache.decorator import cache
 
 # On importe notre videur !
 from app.routers.auth import get_current_user
+
+def envoyer_email_confirmation(email: str, titre_annonce: str):
+    print(f"⏳ [Arrière-plan] Préparation de l'email pour {email}...")
+    time.sleep(3) # On simule un processus qui prend 3 secondes
+    print(f"✅ [Arrière-plan] EMAIL ENVOYÉ avec succès à {email} pour l'annonce '{titre_annonce}' !")
 
 router = APIRouter()
 
 # 🟢 ROUTE PUBLIQUE : Tout le monde peut voir les annonces
 @router.get("/annonces", response_model=List[AnnonceResponse])
+@cache(expire=60)
 def list_annonces(
     commune: Optional[str] = Query(None),
     categorie: Optional[str] = Query(None),
@@ -38,6 +46,7 @@ def get_annonce(id: int, db: Session = Depends(get_db)):
 @router.post("/annonces", response_model=AnnonceResponse, status_code=status.HTTP_201_CREATED)
 def create_annonce(
     annonce_data: AnnonceCreate, 
+    background_tasks: BackgroundTasks, 
     db: Session = Depends(get_db),
     utilisateur_actuel: Utilisateur = Depends(get_current_user) # Le videur est ici !
 ):
@@ -46,6 +55,9 @@ def create_annonce(
     db.add(nouvelle_annonce)
     db.commit()
     db.refresh(nouvelle_annonce)
+    
+    background_tasks.add_task(envoyer_email_confirmation, utilisateur_actuel.email, nouvelle_annonce.titre)
+
     return nouvelle_annonce
 
 # 🔴 ROUTE PROTÉGÉE : Il faut être connecté
@@ -88,3 +100,10 @@ def delete_annonce(
     
     annonce.actif = False
     db.commit()
+
+    import time # (Si tu ne l'as plus en haut du fichier)
+
+@router.get("/test-cache")
+@cache(expire=60)
+def test_du_cache():
+    return {"heure_exacte": time.time()}

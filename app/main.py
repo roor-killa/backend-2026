@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from app.routers import annonces, auth
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+import redis.asyncio as redis
 
 # Création de l'application FastAPI
 app = FastAPI(
@@ -8,6 +11,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.on_event("startup")
+async def startup():
+    redis_client = redis.from_url("redis://localhost:6379")
+    FastAPICache.init(RedisBackend(redis_client), prefix="karibmarket-cache")
+    
 # On connecte le fichier annonces.py à notre application principale
 app.include_router(
     annonces.router,
