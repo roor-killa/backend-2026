@@ -1,0 +1,2 @@
+CREATE DATABASE kiprix_db;
+GRANT ALL PRIVILEGES ON DATABASE kiprix_db TO karib;

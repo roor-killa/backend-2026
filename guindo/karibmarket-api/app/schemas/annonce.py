@@ -16,7 +16,7 @@ class AnnonceBase(BaseModel):
     description: Optional[str] = None
     prix: float = Field(..., gt=0)
     commune: str
-    categorie: CategorieAnnonce
+    categorie: CategorieAnnonce = CategorieAnnonce.AUTRE
 
 class AnnonceCreate(AnnonceBase):
     pass

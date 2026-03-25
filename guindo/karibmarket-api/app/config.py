@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     KIPRIX_DATABASE_URL: str
 
+    REDIS_URL: str = "redis://localhost:6379"        # ← nouveau
+    SCRAPER_PATH: str = ""                           # ← nouveau
+    SCRAPER_PYTHON: str = "python" 
     class Config:
         env_file = ".env"
 
