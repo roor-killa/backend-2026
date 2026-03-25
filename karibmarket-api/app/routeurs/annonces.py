@@ -1,7 +1,8 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
+from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,14 +16,6 @@ from app.schemas.annonce import (
 
 from app.routeurs.auth import get_current_user
 from app.models.utilisateur import Utilisateur
-
-
-#les imports asynchrone
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-
-from fastapi import BackgroundTasks
-import smtplib
-from email.mime.text import MIMEText
 
 router = APIRouter()
 
@@ -42,7 +35,8 @@ def notifier_moderateurs(annonce_id: int):
 
 
 @router.get("/annonces", response_model=List[AnnonceResponse])
-def list_annonces(
+@cache(expire=60)  # ← Cette réponse est mise en cache 60 secondes
+async def list_annonces(
     commune: Optional[str] = Query(None),
     categorie: Optional[CategorieAnnonce] = Query(None),
     page: int = Query(1, gt=0),
@@ -56,7 +50,7 @@ def list_annonces(
     if categorie:
         query = query.filter(Annonce.categorie == to_model_categorie(categorie))
 
-    return db.query(Annonce).all()
+    return query.offset((page - 1) * limit).limit(limit).all()
 
 
 @router.post(

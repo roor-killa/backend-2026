@@ -1,0 +1,31 @@
+
+# docker-compose.yml
+version: '3.9'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./uploads:/app/uploads
+      - ./chroma_db:/app/chroma_db
+    env_file: .env
+    depends_on:
+      - db
+    command: uvicorn app.main:app --host 0.0.0.0 --reload
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: karibdocs
+      POSTGRES_USER: kd_user
+      POSTGRES_PASSWORD: kd_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

@@ -10,7 +10,6 @@ from app import models  # noqa: F401
 
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.decorator import cache
 import redis.asyncio as redis
 
 
@@ -57,9 +56,3 @@ def health_check():
 async def startup():
     redis_client = redis.from_url("redis://localhost:6379")
     FastAPICache.init(RedisBackend(redis_client), prefix="karibmarket-cache")
-
-# Mettre en cache la liste des annonces (expire après 60 secondes)
-@router.get("/annonces")
-@cache(expire=60)  # ← Cette réponse est mise en cache 60 secondes
-async def list_annonces(db: Session = Depends(get_db)):
-    return db.query(Annonce).filter(Annonce.actif == True).all()
