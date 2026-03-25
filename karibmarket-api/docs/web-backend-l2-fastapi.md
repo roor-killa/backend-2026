@@ -1639,7 +1639,7 @@ pytest tests/ -v
 # Avec couverture de code
 pip install pytest-cov
 pytest tests/ -v --cov=app --cov-report=html
-```
+``` 
 
 ---
 

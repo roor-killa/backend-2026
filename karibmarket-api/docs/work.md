@@ -3,8 +3,7 @@
 Lancer le projet 
 Depuis le dossier karibmarket-api/ :                                                                                                                             
   # 1. Activer l'environnement virtuel                                                                                                                     
-  source .venv/bin/activate                                                                                                                                
-                                                                                                                                                           
+  source .venv/bin/activate                                                                                                                                                                                    
   # 2. Installer les dépendances (si pas encore fait)                                                                                                      
   pip install -r requirements.txt                                                                                                                          
                   
