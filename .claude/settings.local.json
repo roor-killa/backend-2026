@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(cd /Users/roor/Documents/dev/cours/L2_backend/backend-fastapi/karibmarket-api && .venv/bin/pip install alembic passlib bcrypt -q && .venv/bin/alembic init alembic 2>&1)",
-      "Bash(cd:*)"
-    ]
-  }
-}
