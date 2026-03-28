@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from app.config import settings
 from app.database import Base
-from app.models import utilisateur  # noqa: F401 - ensure model registration
+from app.models.utilisateur import Utilisateur
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,7 +23,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
-# Use the application database URL instead of Alembic's placeholder default.
+# Ensure Alembic uses the same URL as the application settings.
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # other values from the config, defined by the needs of env.py,
