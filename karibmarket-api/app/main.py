@@ -32,7 +32,7 @@ app.include_router(auth_router)
 # Configuration CORS — autorise le frontend à appeler l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # URL de votre frontend Next.js
+    allow_origins=["*"],  # URL de votre frontend Next.js
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

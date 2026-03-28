@@ -10,6 +10,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+
+def create_tables():
+    # Ensure ORM models are loaded before metadata creation.
+    from app.models import utilisateur_model  # noqa: F401
+
+    Base.metadata.create_all(bind=engine)
+
 def get_db():
     db = SessionLocal()
     try:
