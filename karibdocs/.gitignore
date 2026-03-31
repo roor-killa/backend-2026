@@ -1,4 +1,4 @@
-# Python bytecode and caches
+# Python caches and bytecode
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,40 +9,49 @@ venv/
 env/
 ENV/
 
-# Distribution / packaging
+# Build and packaging artifacts
 build/
 dist/
+site/
 *.egg-info/
 .eggs/
 pip-wheel-metadata/
 
-# Test / lint / type-check caches
+# Test, lint, and type-check artifacts
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
 .coverage
 .coverage.*
 htmlcov/
 
-# Notebooks
+# Jupyter
 .ipynb_checkpoints/
 
-# Logs and local runtime files
+# Logs and runtime files
 *.log
 *.pid
+*.seed
 
-# Environment variables / secrets
+# Local environment and secrets
 .env
 .env.*
 !.env.example
 
-# IDE / editor settings
+# Editor and IDE files
 .idea/
 .vscode/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Docker overrides
+docker-compose.override.yml
 
 # Project runtime/generated data
 uploads/
