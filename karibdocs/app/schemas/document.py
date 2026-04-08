@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
+from typing import List
 
 
 class DocumentOut(BaseModel):
@@ -20,3 +21,8 @@ class DocumentOut(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+
+class DocumentListOut(BaseModel):
+    count: int
+    documents: List[DocumentOut]

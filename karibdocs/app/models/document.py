@@ -1,12 +1,15 @@
 
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 
 class Document(Base):
     __tablename__ = "documents"
+    __table_args__ = (
+        Index("ix_documents_user_created_at", "user_id", "created_at"),
+    )
 
     id              = Column(Integer, primary_key=True, index=True)
     user_id         = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)

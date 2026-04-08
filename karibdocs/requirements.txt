@@ -38,3 +38,8 @@ opentelemetry-semantic-conventions==0.46b0
 google-api-python-client==2.133.0
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
+
+# --- Scraping ---
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0

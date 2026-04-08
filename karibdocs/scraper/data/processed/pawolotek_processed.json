@@ -1,0 +1,55 @@
+[
+  {
+    "source": "pawolotek.com",
+    "source_id": 1,
+    "url": "https://pawolotek.com/index.php/podcast-item/toufe/",
+    "categorie": "lexique",
+    "titre": "Toufé",
+    "texte_creole": "Toufé, c’est étouffer, ou couvrir selon le contexte. C’est aussi un geste culinaire. #verbe #pawol #manjé #touféyenyen",
+    "texte_fr": "",
+    "audio_url": "",
+    "hashtags": [
+      "#verbe",
+      "#pawol",
+      "#manjé",
+      "#touféyenyen"
+    ],
+    "date_publication": "2022-12-03"
+  },
+  {
+    "source": "pawolotek.com",
+    "source_id": 1,
+    "url": "https://pawolotek.com/index.php/podcast-item/manje-lokal/",
+    "categorie": "societe",
+    "titre": "Manjé lokal",
+    "texte_creole": "",
+    "texte_fr": "",
+    "audio_url": "",
+    "hashtags": [],
+    "date_publication": "2022-12-05"
+  },
+  {
+    "source": "pawolotek.com",
+    "source_id": 1,
+    "url": "https://pawolotek.com/index.php/podcast-item/obsekisa/",
+    "categorie": "creation",
+    "titre": "ObsèKisa",
+    "texte_creole": "Textes, enregistrements, réalisation : Simone Lagrand Création sonore : Marc Parazon",
+    "texte_fr": "",
+    "audio_url": "",
+    "hashtags": [],
+    "date_publication": "2022-12-05"
+  },
+  {
+    "source": "pawolotek.com",
+    "source_id": 1,
+    "url": "https://pawolotek.com/index.php/podcast-item/twazaviwon/",
+    "categorie": "extraits",
+    "titre": "Twazaviwon",
+    "texte_creole": "",
+    "texte_fr": "",
+    "audio_url": "",
+    "hashtags": [],
+    "date_publication": "2022-12-06"
+  }
+]

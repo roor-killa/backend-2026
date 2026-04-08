@@ -1,6 +1,5 @@
 
-
-from langchain_mistralai import ChatMistralAI
+from langchain_community.chat_models import ChatOllama
 from langchain.schema import HumanMessage, SystemMessage
 from sqlalchemy.orm import Session
 import json
@@ -23,15 +22,18 @@ class ChatService:
     def __init__(self, db: Session):
         self.db = db
         self.rag = RAGService()
-        self.llm = ChatMistralAI(
-            model="mistral-large-latest",
-            api_key=settings.MISTRAL_API_KEY,
+        self.llm = ChatOllama(
+            base_url=settings.OLLAMA_BASE_URL,
+            model=settings.OLLAMA_MODEL,
             temperature=0.1,
-            max_tokens=2048,
+            num_predict=2048,
         )
 
     def ask(self, user_id: int, question: str, session_id: int = None) -> dict:
         """Traitement complet d'une question RAG."""
+        question = (question or "").strip()
+        if not question:
+            raise ValueError("La question ne peut pas être vide")
 
         # 1. Session de conversation
         session = self._get_or_create_session(user_id, session_id, question)
@@ -71,7 +73,12 @@ QUESTION : {question}
             SystemMessage(content=SYSTEM_PROMPT),
             HumanMessage(content=augmented_prompt),
         ]
-        response = self.llm.invoke(messages)
+        try:
+            response = self.llm.invoke(messages)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Ollama indisponible ou modèle introuvable ({settings.OLLAMA_MODEL})"
+            ) from exc
 
         # 6. Sauvegarde en BDD
         self._save_messages(session.id, question, response.content, sources)
@@ -85,7 +92,10 @@ QUESTION : {question}
 
     def _get_or_create_session(self, user_id, session_id, question):
         if session_id:
-            return self.db.get(ChatSession, session_id)
+            session = self.db.get(ChatSession, session_id)
+            if not session or session.user_id != user_id:
+                raise ValueError("Session introuvable")
+            return session
         title = question[:50] + "..." if len(question) > 50 else question
         session = ChatSession(user_id=user_id, title=title)
         self.db.add(session)

@@ -8,6 +8,8 @@ class Settings(BaseSettings):
 
     MISTRAL_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
+    OLLAMA_MODEL: str = "llama3.1"
 
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
