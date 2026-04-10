@@ -287,18 +287,23 @@ class RCIScraper(BaseScraper):
         Returns:
             Dictionnaire conforme au schéma `documents`.
         """
+        title = item.get("title") or item.get("titre") or ""
+        content = item.get("resume") or item.get("body") or item.get("content") or ""
+        published_at = item.get("date") or item.get("published_at")
+
         return {
             "source": "rci",
-            "doc_type": "article",
-            "title": item.get("title", ""),
-            "content": item.get("body", ""),
+            "doc_type": "actualite",
+            "title": title,
+            "content": content,
             "url": item.get("url"),
-            "published_at": None,
+            "published_at": published_at,
             "metadata": {
                 "author": item.get("author", ""),
                 "photo": item.get("photo", ""),
                 "infos": item.get("infos", ""),
                 "depth": item.get("depth", 0),
+                "categorie": item.get("categorie", ""),
             },
         }
 

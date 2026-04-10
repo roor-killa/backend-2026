@@ -4,10 +4,10 @@ services:
     build: .
     ports:
       - "8000:8000"
-    # volumes:
-      # - ./app:/app/app
-      # - ./uploads:/app/uploads
-      # - ./chroma_db:/app/chroma_db
+    volumes:
+      - ./app:/app/app
+      - ./uploads:/app/uploads
+      - ./chroma_db:/app/chroma_db
     env_file: .env
     environment:
       DATABASE_URL: postgresql://kd_user:kd_secret@db:5432/karibdocs

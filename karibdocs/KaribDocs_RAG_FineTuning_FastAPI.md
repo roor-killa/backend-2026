@@ -1018,117 +1018,6 @@ def sync_drive_file(
 
 ---
 
-## 7. Introduction au Fine-Tuning
-
-### 7.1 Cas d'usage pour KaribDocs
-
-> 🎯 **Quand utiliser le Fine-Tuning ?**
-> - Adapter le ton du chatbot au contexte caribéen (expressions locales)
-> - Entraîner le modèle sur un domaine très spécialisé (droit antillais, agriculture tropicale)
-> - Améliorer la qualité des réponses sur un type de document précis
-> - Créer un modèle qui respecte les préférences de formatage de votre organisation
-
----
-
-### 7.2 Préparation du Dataset (format JSONL)
-
-```jsonl
-{"messages": [
-  {"role": "system",   "content": "Tu es KaribDocs Assistant, spécialiste en analyse de documents antillais."},
-  {"role": "user",     "content": "Qu'est-ce que le TCSP à Fort-de-France ?"},
-  {"role": "assistant","content": "Le TCSP (Transport Collectif en Site Propre) est le réseau de bus en voie dédiée de l'agglomération foyalaise..."}
-]}
-{"messages": [
-  {"role": "system",   "content": "Tu es KaribDocs Assistant..."},
-  {"role": "user",     "content": "Explique le crédit agricole en Martinique"},
-  {"role": "assistant","content": "La BRED (anciennement Crédit Agricole Martinique) propose..."}
-]}
-```
-
-> **Minimum recommandé :** 50 à 100 exemples pour un fine-tuning efficace
-
----
-
-### 7.3 Fine-Tuning via Mistral AI API
-
-```python
-# scripts/finetune_mistral.py
-import os, time
-from mistralai import Mistral
-
-client = Mistral(api_key=os.environ["MISTRAL_API_KEY"])
-
-def upload_dataset(file_path: str) -> str:
-    """Upload le fichier JSONL sur les serveurs Mistral."""
-    with open(file_path, "rb") as f:
-        response = client.files.upload(
-            file={"file_name": "karib_dataset.jsonl", "content": f},
-            purpose="fine-tune",
-        )
-    print(f"Dataset uploadé : {response.id}")
-    return response.id
-
-def create_finetune_job(training_file_id: str) -> str:
-    """Lance le job de fine-tuning."""
-    job = client.fine_tuning.jobs.create(
-        model="open-mistral-7b",
-        training_files=[training_file_id],
-        hyperparameters={
-            "training_steps": 100,
-            "learning_rate":  0.0001,
-        },
-        suffix="karibdocs-v1",
-    )
-    print(f"Job créé : {job.id} — Statut: {job.status}")
-    return job.id
-
-def monitor_job(job_id: str):
-    """Surveille l'avancement du fine-tuning."""
-    while True:
-        job = client.fine_tuning.jobs.get(job_id=job_id)
-        print(f"Statut: {job.status} | Tokens: {job.trained_tokens}")
-        if job.status in ["SUCCESS", "FAILED", "CANCELLED"]:
-            if job.status == "SUCCESS":
-                print(f"✅ Modèle disponible : {job.fine_tuned_model}")
-            break
-        time.sleep(30)
-
-if __name__ == "__main__":
-    file_id = upload_dataset("./data/dataset_karib.jsonl")
-    job_id  = create_finetune_job(file_id)
-    monitor_job(job_id)
-```
-
----
-
-### 7.4 Utiliser le Modèle Fine-Tuné
-
-```python
-# app/config.py
-MISTRAL_MODEL: str = "mistral-large-latest"
-MISTRAL_FINETUNED_MODEL: str = ""  # Ex: "ft:open-mistral-7b:org:karibdocs-v1"
-
-# app/services/chat_service.py
-def get_llm(use_finetuned: bool = False):
-    model = settings.MISTRAL_FINETUNED_MODEL if (
-        use_finetuned and settings.MISTRAL_FINETUNED_MODEL
-    ) else settings.MISTRAL_MODEL
-
-    return ChatMistralAI(
-        model=model,
-        api_key=settings.MISTRAL_API_KEY,
-        temperature=0.1,
-    )
-```
-
-> ⚠️ **Coûts Fine-Tuning Mistral**
-> - ~$2 / million de tokens d'entraînement
-> - 1000 exemples ≈ 100k–500k tokens → budget estimé : **$5 à $20**
-> - Alternative gratuite : **Ollama** + modèle local (Llama 3, Mistral 7B)
-> - Pour le cours : le RAG seul suffit, le fine-tuning est un **bonus**
-
----
-
 ## 8. TPs & Livrables
 
 ### TP 1 — Mise en place de l'environnement *(Semaine 1-2)*
@@ -1170,16 +1059,14 @@ def get_llm(use_finetuned: bool = False):
 
 ---
 
-### TP 4 — Google Drive & Fine-Tuning *(Semaine 7-8)*
+### TP 4 — Google Drive *(Semaine 7-8)*
 
-**Objectif :** Connecter Google Drive et initier un fine-tuning
+**Objectif :** Connecter Google Drive
 
 1. Créer un projet Google Cloud et activer l'API Drive
 2. Implémenter `GET /drive/connect` et `GET /drive/oauth/callback`
 3. Lister les fichiers d'un dossier Drive
 4. Implémenter `POST /drive/sync/{file_id}`
-5. Créer un dataset JSONL de 30+ exemples Q&A caribéens
-6. **Bonus :** Lancer un job de fine-tuning Mistral et utiliser le modèle résultant
 
 ---
 
@@ -1197,8 +1084,7 @@ def get_llm(use_finetuned: bool = False):
 | Intégration Google Drive (OAuth + sync) | 15 | Flux OAuth2 + import fichier |
 | Qualité du code (clean, commenté, typé) | 10 | PEP8, docstrings, types Pydantic |
 | Tests unitaires (pytest) | 5 | ≥5 tests services |
-| **Bonus : Fine-Tuning fonctionnel** | +5 | Dataset + job Mistral |
-| **TOTAL** | **100** | |
+| **TOTAL** | **95** | |
 
 ---
 

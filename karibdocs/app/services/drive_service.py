@@ -11,6 +11,7 @@ from app.config import settings
 SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly",
     "https://www.googleapis.com/auth/userinfo.email",
+    "openid",
 ]
 
 SUPPORTED_MIME_TYPES = {
@@ -21,7 +22,19 @@ SUPPORTED_MIME_TYPES = {
 }
 
 class DriveService:
-    def get_auth_url(self) -> str:
+    @staticmethod
+    def _ensure_oauth_config() -> None:
+        placeholders = {"", "votre-client-id", "votre-secret"}
+        if settings.GOOGLE_CLIENT_ID in placeholders or settings.GOOGLE_CLIENT_SECRET in placeholders:
+            raise ValueError(
+                "Google OAuth non configure: renseignez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans le fichier .env"
+            )
+
+        if not settings.GOOGLE_REDIRECT_URI:
+            raise ValueError("Google OAuth non configure: renseignez GOOGLE_REDIRECT_URI dans le fichier .env")
+
+    def get_auth_url(self, state: str | None = None) -> str:
+        self._ensure_oauth_config()
         flow = Flow.from_client_config(
             {
                 "web": {
@@ -39,10 +52,12 @@ class DriveService:
             access_type="offline",
             include_granted_scopes="true",
             prompt="consent",
+            state=state,
         )
         return auth_url
 
     def exchange_code(self, code: str) -> dict:
+        self._ensure_oauth_config()
         flow = Flow.from_client_config(
             {
                 "web": {

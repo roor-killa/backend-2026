@@ -13,7 +13,10 @@ Base = declarative_base()
 
 def create_tables():
     # Ensure ORM models are loaded before metadata creation.
-    from app.models import utilisateur_model, document, chat_session  # noqa: F401
+    import app.models.utilisateur_model  # noqa: F401
+    import app.models.document  # noqa: F401
+    import app.models.chat_session  # noqa: F401
+    import app.models.google_drive_credential  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
 
