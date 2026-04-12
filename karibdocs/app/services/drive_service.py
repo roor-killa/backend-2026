@@ -86,7 +86,7 @@ class DriveService:
         creds = Credentials(**credentials)
         service = build("drive", "v3", credentials=creds)
 
-        query = "trashed=false"
+        query = "trashed=false and 'me' in owners"
         if folder_id:
             query += f" and '{folder_id}' in parents"
         mime_filter = " or ".join([f"mimeType='{m}'" for m in SUPPORTED_MIME_TYPES])

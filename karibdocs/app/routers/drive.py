@@ -106,6 +106,7 @@ def sync_drive_file(
         user=current_user,
         source="drive",
         drive_file_id=file_id,
+        mime_type=file_info.get("mimeType"),
     )
     background_tasks.add_task(doc_svc.index_document, doc.id)
 

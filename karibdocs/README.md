@@ -18,7 +18,7 @@ Configuration LLM du backend (`.env`):
 - `LLM_TEMPERATURE=0.1`
 - Si `ollama`:
 	- `OLLAMA_BASE_URL=http://host.docker.internal:11434`
-	- `OLLAMA_MODEL=llama3.1`
+	- `OLLAMA_MODEL=ollama pull qwen2.5:3b`
 - Si `mistral`:
 	- `MISTRAL_API_KEY=...`
 	- `MISTRAL_MODEL=mistral-small-latest`
@@ -45,3 +45,7 @@ Route ajoutee pour le frontend interface-scrapping:
 	- Authentification requise (Bearer token)
 	- Lance un scraping RCI a la demande
 	- Retourne les articles collectes dans `items`
+
+
+
+

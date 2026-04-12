@@ -4,6 +4,7 @@ from langchain_mistralai import ChatMistralAI
 from langchain.schema import HumanMessage, SystemMessage
 from sqlalchemy.orm import Session
 import json
+import re
 from app.models.chat_session import ChatSession, ChatMessage
 from app.models.document import Document
 from app.services.rag_service import RAGService
@@ -135,9 +136,11 @@ QUESTION : {question}
             return []
 
         collection_names = []
+        title_by_document_id: dict[int, str] = {}
         for doc in docs:
             if doc.collection_name and doc.collection_name not in collection_names:
                 collection_names.append(doc.collection_name)
+            title_by_document_id[doc.id] = (doc.original_name or doc.filename or "").lower()
 
         # Fallback for older rows where collection_name may be missing.
         default_collection = f"user_{user_id}"
@@ -145,21 +148,77 @@ QUESTION : {question}
             collection_names.append(default_collection)
 
         scored_chunks = []
+        candidate_k = max(settings.RAG_K_RESULTS * 5, 20)
         for collection_name in collection_names:
             scored_chunks.extend(
                 self.rag.similarity_search_with_scores(
                     collection_name=collection_name,
                     query=question,
-                    k=settings.RAG_K_RESULTS,
+                    k=candidate_k,
                 )
             )
 
         if not scored_chunks:
             return []
 
-        scored_chunks.sort(key=lambda item: item[1], reverse=True)
-        top_k = scored_chunks[: settings.RAG_K_RESULTS]
-        return [doc for doc, _ in top_k]
+        question_terms = self._tokenize_for_overlap(question)
+        normalized_question = self._normalize_text(question)
+
+        # Rerank using vector score + chunk overlap + explicit title/filename overlap.
+        reranked = []
+        for doc, score in scored_chunks:
+            text = (doc.page_content or "").lower()
+            overlap = sum(1 for term in question_terms if term in text)
+
+            meta = doc.metadata or {}
+            filename = str(meta.get("filename") or "").lower()
+
+            raw_doc_id = meta.get("document_id")
+            doc_id = self._safe_int(raw_doc_id)
+            db_title = title_by_document_id.get(doc_id, "") if doc_id is not None else ""
+
+            title_text = f"{filename} {db_title}".strip()
+            title_overlap = sum(1 for term in question_terms if term in title_text)
+
+            chunk_bonus = overlap / max(len(question_terms), 1)
+            title_bonus = (title_overlap / max(len(question_terms), 1)) * 1.8
+
+            if normalized_question and normalized_question in self._normalize_text(title_text):
+                title_bonus += 2.0
+
+            reranked.append((doc, float(score) + chunk_bonus + title_bonus))
+
+        reranked.sort(key=lambda item: item[1], reverse=True)
+
+        selected_docs = []
+        seen_fingerprints = set()
+        for doc, _ in reranked:
+            fingerprint = (
+                doc.metadata.get("document_id"),
+                doc.metadata.get("filename"),
+                (doc.page_content or "")[:160],
+            )
+            if fingerprint in seen_fingerprints:
+                continue
+            seen_fingerprints.add(fingerprint)
+            selected_docs.append(doc)
+            if len(selected_docs) >= settings.RAG_K_RESULTS:
+                break
+
+        return selected_docs
+
+    def _tokenize_for_overlap(self, text: str) -> list[str]:
+        terms = [t.lower() for t in re.findall(r"[a-zA-Z0-9']+", text or "")]
+        return [t for t in terms if len(t) >= 3]
+
+    def _normalize_text(self, text: str) -> str:
+        return " ".join(self._tokenize_for_overlap(text))
+
+    def _safe_int(self, value) -> int | None:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
 
     def _repair_mojibake(self, text: str) -> str:
         if not text:

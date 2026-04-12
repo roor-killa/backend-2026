@@ -1,14 +1,67 @@
 from pathlib import Path
 import importlib.util
+import re
 import sys
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.database import get_db
+from app.services.document_service import DocumentService
 from app.models.utilisateur_model import Utilisateur
 
 router = APIRouter()
+
+
+class ScrapedArticleIn(BaseModel):
+    title: str = ""
+    author: str | None = None
+    infos: str | None = None
+    body: str | None = None
+    photo: str | None = None
+    url: str | None = None
+    depth: int | None = None
+
+
+class SaveScrapedArticlesIn(BaseModel):
+    items: list[ScrapedArticleIn] = Field(default_factory=list)
+
+
+class SavedDocumentOut(BaseModel):
+    id: int
+    original_name: str
+
+
+def _slugify_filename(value: str, fallback: str) -> str:
+    base = re.sub(r"[^a-zA-Z0-9]+", "-", value).strip("-").lower()
+    if not base:
+        base = fallback
+    return f"{base[:80]}.txt"
+
+
+def _article_to_text(article: ScrapedArticleIn) -> str:
+    title = (article.title or "Sans titre").strip()
+    author = (article.author or "Auteur inconnu").strip()
+    infos = (article.infos or "").strip()
+    photo = (article.photo or "").strip()
+    url = (article.url or "").strip()
+    depth = article.depth if article.depth is not None else ""
+    body = (article.body or "").strip()
+
+    lines = [
+        f"Titre: {title}",
+        f"Auteur: {author}",
+        f"Infos: {infos}",
+        f"Photo: {photo}",
+        f"URL: {url}",
+        f"Profondeur: {depth}",
+        "",
+        body,
+    ]
+    return "\n".join(lines).strip() + "\n"
 
 
 def _load_rci_scraper_class() -> type:
@@ -77,4 +130,42 @@ def scrape_rci(
         },
         "count": len(items),
         "items": items,
+    }
+
+
+@router.post("/rci/save")
+def save_scraped_rci_articles(
+    payload: SaveScrapedArticlesIn,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(get_current_user),
+):
+    """Persist scraped RCI items like manual document uploads, then index in background."""
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="Aucun article à sauvegarder")
+
+    service = DocumentService(db)
+    saved_docs: list[dict[str, Any]] = []
+
+    try:
+        for idx, article in enumerate(payload.items, start=1):
+            filename_hint = article.title or f"rci-article-{idx}"
+            filename = _slugify_filename(filename_hint, fallback=f"rci-article-{idx}")
+            content = _article_to_text(article).encode("utf-8")
+
+            doc = service.save_from_bytes(
+                content=content,
+                filename=filename,
+                user=current_user,
+                source="rci_scrape",
+            )
+            background_tasks.add_task(service.index_document, doc.id)
+            saved_docs.append({"id": doc.id, "original_name": doc.original_name})
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Erreur sauvegarde des articles: {exc}") from exc
+
+    return {
+        "message": f"{len(saved_docs)} article(s) sauvegardé(s) et indexation lancée.",
+        "count": len(saved_docs),
+        "documents": saved_docs,
     }

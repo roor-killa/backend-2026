@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 from src.base_scraper import BaseScraper
 
@@ -57,7 +57,12 @@ class RCIScraper(BaseScraper):
         self.start_url: str = start_url or (self.BASE_URL + self.START_PATH)
         self.max_depth: int = max_depth
         self.visited: set[str] = set()
+        self.known_urls: set[str] = set()
         self.domain: str = urlparse(self.BASE_URL).netloc  # "rci.fm"
+
+    def set_known_urls(self, urls: set[str]) -> None:
+        """Configure les URLs deja presentes en base pour eviter le refetch."""
+        self.known_urls = {self._normalize_url(u) for u in urls if u}
 
     # ------------------------------------------------------------------
     # Helpers — filtrage et normalisation des liens
@@ -130,7 +135,7 @@ class RCIScraper(BaseScraper):
             href = str(a_tag["href"])
             absolute = urljoin(current_url, href)
             normalized = self._normalize_url(absolute)
-            if normalized in seen or normalized in self.visited:
+            if normalized in seen or normalized in self.visited or normalized in self.known_urls:
                 continue
             if self._is_valid_link(normalized):
                 seen.add(normalized)
@@ -186,7 +191,7 @@ class RCIScraper(BaseScraper):
 
         # --- Corps de l'article ---
         contenu_elems = soup.find_all(attrs={"property": "schema:text"})
-        body = "".join(elem.get_text(strip=True) for elem in contenu_elems)
+        body = " ".join(elem.get_text(strip=True) for elem in contenu_elems)
 
         if not title and not body:
             return []
@@ -218,6 +223,10 @@ class RCIScraper(BaseScraper):
         if depth > self.max_depth:
             return
         if max_pages and len(self.visited) >= max_pages:
+            return
+
+        # Evite de recharger un article deja present en base.
+        if depth > 0 and normalized in self.known_urls:
             return
 
         # Marquer comme visitée
@@ -287,9 +296,9 @@ class RCIScraper(BaseScraper):
         Returns:
             Dictionnaire conforme au schéma `documents`.
         """
-        title = item.get("title") or item.get("titre") or ""
-        content = item.get("resume") or item.get("body") or item.get("content") or ""
-        published_at = item.get("date") or item.get("published_at")
+        title = item.get("title") or item.get("titre", "")
+        content = item.get("body") or item.get("resume") or item.get("content", "")
+        published_at = item.get("date_publication") or item.get("date")
 
         return {
             "source": "rci",
@@ -307,13 +316,60 @@ class RCIScraper(BaseScraper):
             },
         }
 
+    @staticmethod
+    def _chunk_items(items: list[dict[str, Any]], chunk_size: int) -> list[list[dict[str, Any]]]:
+        """Découpe une liste en lots de taille fixe."""
+        if chunk_size <= 0:
+            raise ValueError("chunk_size doit être > 0")
+        return [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+    def save_to_db(self, conn: Any, chunk_size: int = 200) -> int:
+        """Upsert des données RCI dans PostgreSQL par lots.
+
+        Cette version surcharge BaseScraper.save_to_db afin de contrôler
+        explicitement le traitement en chunks pour les volumes importants.
+
+        Args:
+            conn: Connexion psycopg2 active.
+            chunk_size: Taille d'un lot d'upsert.
+
+        Returns:
+            Nombre total de documents traités.
+        """
+        from src.db_loader import DocumentLoader
+
+        if not self.data:
+            return 0
+
+        loader = DocumentLoader(conn)
+        total = 0
+        for batch in self._chunk_items(self.data, chunk_size):
+            total += loader.upsert_many(batch, self.to_document)
+
+        logger.info(
+            "RCIScraper DB save terminé — %d docs traités en chunks de %d",
+            total,
+            chunk_size,
+        )
+        return total
+
+    def save_to_db_url(self, db_url: str, chunk_size: int = 200) -> int:
+        """Ouvre une connexion PostgreSQL depuis une URL et upsert par lots."""
+        import psycopg2
+
+        conn = psycopg2.connect(db_url)
+        try:
+            return self.save_to_db(conn, chunk_size=chunk_size)
+        finally:
+            conn.close()
+
 
 # ------------------------------------------------------------------
 # Point d'entrée en ligne de commande
 # ------------------------------------------------------------------
 
 def main() -> None:
-    """Exécute le scraper RCI et sauvegarde les résultats en JSON."""
+    """Exécute le scraper RCI et sauvegarde les résultats en JSON + PostgreSQL."""
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -343,6 +399,31 @@ def main() -> None:
         default=None,
         help="Chemin du fichier JSON de sortie (défaut : data/raw/rci_raw.json)",
     )
+    parser.set_defaults(save_db=True)
+    parser.add_argument(
+        "--save-db",
+        dest="save_db",
+        action="store_true",
+        help="Active la sauvegarde PostgreSQL (activée par défaut)",
+    )
+    parser.add_argument(
+        "--no-save-db",
+        dest="save_db",
+        action="store_false",
+        help="Désactive la sauvegarde PostgreSQL",
+    )
+    parser.add_argument(
+        "--db-url",
+        type=str,
+        default="",
+        help="URL PostgreSQL complète. Si absente, utilise les variables .env via get_connection().",
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=200,
+        help="Taille des lots pour l'UPSERT PostgreSQL (défaut : 200)",
+    )
     args = parser.parse_args()
 
     # Configuration du logging
@@ -364,6 +445,22 @@ def main() -> None:
     scraper.save_to_json(output_path)
     scraper.save_to_csv(output_path.with_suffix(".csv"))
     print(f"✓ {len(scraper.data)} articles sauvegardés → {output_path}")
+
+    if args.save_db:
+        if args.chunk_size <= 0:
+            raise ValueError("--chunk-size doit être > 0")
+
+        if args.db_url:
+            inserted = scraper.save_to_db_url(args.db_url, chunk_size=args.chunk_size)
+        else:
+            from src.db_loader import get_connection
+
+            conn = get_connection()
+            try:
+                inserted = scraper.save_to_db(conn, chunk_size=args.chunk_size)
+            finally:
+                conn.close()
+        print(f"✓ Import PostgreSQL terminé: {inserted} document(s) traité(s)")
 
 
 if __name__ == "__main__":

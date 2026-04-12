@@ -3,12 +3,21 @@
 import os, uuid
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
+from langchain.schema import Document as LCDocument
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from app.models.document import Document
 from app.models.user import User
 from app.config import settings
 from app.services.rag_service import RAGService
+
+_MIME_TO_EXT = {
+    "application/pdf": "pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.google-apps.document": "docx",
+    "text/plain": "txt",
+    "text/markdown": "md",
+}
 
 class DocumentService:
     def __init__(self, db: Session):
@@ -50,14 +59,38 @@ class DocumentService:
         loaders = {
             "pdf":  lambda p: PyPDFLoader(p).load(),
             "docx": lambda p: Docx2txtLoader(p).load(),
-            "txt":  lambda p: TextLoader(p, encoding="utf-8").load(),
-            "md":   lambda p: TextLoader(p, encoding="utf-8").load(),
+            "txt":  lambda p: self._load_text_file(p),
+            "md":   lambda p: self._load_text_file(p),
         }
         loader_fn = loaders.get(document.file_type)
         if not loader_fn:
             raise ValueError(f"Type non supporté: {document.file_type}")
 
         return loader_fn(file_path)
+
+    def _load_text_file(self, file_path: str) -> list[LCDocument]:
+        """Charge un fichier texte en essayant plusieurs encodages courants."""
+        with open(file_path, "rb") as handle:
+            head = handle.read(8)
+
+        # ZIP signature -> likely docx/xlsx/other binary archive, not plain text.
+        if head.startswith(b"PK"):
+            raise RuntimeError(
+                f"Fichier binaire detecte pour {file_path}. Le type de fichier en base est probablement incorrect."
+            )
+
+        encodings = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
+        last_error: Exception | None = None
+
+        for encoding in encodings:
+            try:
+                with open(file_path, "r", encoding=encoding) as handle:
+                    content = handle.read()
+                return [LCDocument(page_content=content, metadata={"source": file_path})]
+            except UnicodeDecodeError as exc:
+                last_error = exc
+
+        raise RuntimeError(f"Impossible de lire le fichier texte {file_path}") from last_error
 
     def save_from_bytes(
         self,
@@ -66,13 +99,16 @@ class DocumentService:
         user: User,
         source: str = "drive",
         drive_file_id: str | None = None,
+        mime_type: str | None = None,
     ) -> Document:
         """Sauvegarde un fichier binaire (ex: Drive) puis crée l'entrée BDD."""
         user_dir = os.path.join(settings.UPLOAD_DIR, str(user.id))
         os.makedirs(user_dir, exist_ok=True)
 
         original_name = filename or "drive_file"
-        ext = original_name.split(".")[-1].lower() if "." in original_name else "txt"
+        ext = _MIME_TO_EXT.get((mime_type or "").lower())
+        if not ext:
+            ext = original_name.split(".")[-1].lower() if "." in original_name else "txt"
         unique_name = f"{uuid.uuid4()}.{ext}"
         file_path = os.path.join(user_dir, unique_name)
 
@@ -133,6 +169,12 @@ class DocumentService:
                 separators=["\n\n", "\n", ".", "!", "?", ",", " "],
             )
             chunks = splitter.split_documents(pages)
+
+            title_context = (doc.original_name or doc.filename or "").strip()
+            if title_context:
+                for chunk in chunks:
+                    if not chunk.page_content.startswith("Titre document:"):
+                        chunk.page_content = f"Titre document: {title_context}\n\n{chunk.page_content}"
 
             # 3. Ajout de métadonnées
             for chunk in chunks:
