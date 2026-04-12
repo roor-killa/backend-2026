@@ -32,3 +32,5 @@ app.include_router(scraping.router,  prefix="/scraping",  tags=["Scraping"])
 @app.get("/", tags=["Health"])
 def health_check():
     return {"status": "ok", "app": "KaribDocs", "version": "1.0.0"}
+
+

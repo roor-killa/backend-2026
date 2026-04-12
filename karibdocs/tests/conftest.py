@@ -51,22 +51,20 @@ def client(tmp_path, monkeypatch):
         lambda self, document_id, force=False: None,
     )
 
-    # Keep database state deterministic across tests while using the real Postgres instance.
-    table_names = [table.name for table in Base.metadata.sorted_tables]
-
-    def reset_db_state():
-        db = SessionLocal()
-        try:
-            if table_names:
-                quoted = ", ".join([f'"{name}"' for name in table_names])
-                db.execute(text(f"TRUNCATE TABLE {quoted} RESTART IDENTITY CASCADE"))
-                db.commit()
-        finally:
-            db.close()
-
-    reset_db_state()
-
     with TestClient(fastapi_app) as test_client:
         yield test_client
 
-    reset_db_state()
+
+def manual_reset_db_state() -> None:
+    """Reset test DB tables only when explicitly called."""
+    from app.database import Base, SessionLocal
+
+    table_names = [table.name for table in Base.metadata.sorted_tables]
+    db = SessionLocal()
+    try:
+        if table_names:
+            quoted = ", ".join([f'"{name}"' for name in table_names])
+            db.execute(text(f"TRUNCATE TABLE {quoted} RESTART IDENTITY CASCADE"))
+            db.commit()
+    finally:
+        db.close()
