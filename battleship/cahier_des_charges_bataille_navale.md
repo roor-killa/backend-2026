@@ -91,7 +91,7 @@ Unity WebGL (3D) <--JS Bridge--> Next.js (Vercel) <--HTTP/JSON--> FastAPI (Railw
 
 ### 3.2 Stack technologique
 
-#### Backend — Ibrahim Guindo
+#### Backend + BDD + Tests — Ibrahim Guindo
 
 | Composant | Technologie |
 |---|---|
@@ -101,17 +101,16 @@ Unity WebGL (3D) <--JS Bridge--> Next.js (Vercel) <--HTTP/JSON--> FastAPI (Railw
 | Documentation API | Swagger UI (intégré FastAPI) |
 | Déploiement | Railway |
 
-#### Base de données & Tests — Mohand Sadi
+#### Frontend (Next.js) — Mohand Sadi
 
 | Composant | Technologie |
 |---|---|
-| ORM | SQLAlchemy |
-| BDD développement | SQLite |
-| BDD production | PostgreSQL |
-| Tests | Pytest + HTTPX |
-| Versioning | Git / GitHub |
+| Moteur 3D | Unity WebGL (Unity 2022 LTS) |
+| Langage | C# |
+| Communication | JavaScript Bridge |
+| Déploiement | Vercel |
 
-#### Frontend & 3D — Junior Akonou
+#### 3D & Déploiement (Unity WebGL) — Junior Akonou
 
 | Composant | Technologie |
 |---|---|
@@ -250,43 +249,46 @@ battleship-front/
 
 ## 7. Répartition des tâches
 
-### 7.1 Ibrahim Guindo — Responsable Backend
+### 7.1 Ibrahim Guindo — Responsable Backend + BDD + Tests
 
 - Initialisation du projet FastAPI et configuration Uvicorn
 - Mise en place du CORS pour la communication avec Next.js
 - Développement des routers : players, games, shots
 - Implémentation de la logique métier (placement, tirs, détection victoire)
-- Développement de l'IA solo (niveaux facile, moyen et difficile)
-- Déploiement du backend sur Railway
-- Rédaction du README backend
-
-### 7.2 Mohand Sadi — Responsable Base de données & Tests
-
-- Conception et implémentation des modèles SQLAlchemy
+- Implémentation des modèles SQLAlchemy (Player, Game, Board, Ship, Shot)
 - Définition des schémas Pydantic (requêtes et réponses)
-- Configuration de SQLite (développement) et PostgreSQL (production)
-- Écriture des migrations de base de données
+- Configuration de SQLite (dev) et PostgreSQL (prod)
+- Développement de l'IA solo (niveaux facile, moyen et difficile)
 - Rédaction des tests unitaires et d'intégration avec Pytest + HTTPX
-- Validation des endpoints via Swagger UI
-- Gestion du dépôt Git (branches, pull requests, résolution de conflits)
+- Déploiement du backend sur Railway
 
-### 7.3 Junior Akonou — Responsable Frontend & 3D
+### 7.2 Mohand Sadi — Responsable Frontend (Next.js)
 
 - Initialisation du projet Next.js 14 avec TypeScript et Tailwind CSS
 - Développement des pages : accueil, jeu, leaderboard
-- Intégration du build Unity WebGL dans Next.js via composant `UnityGame.tsx`
-- Mise en place du JavaScript Bridge Unity ↔ Next.js
-- Développement des composants : placement bateaux, résultats tirs
-- Connexion au backend FastAPI via Axios (`lib/api.ts`)
+- Création de `lib/api.ts` avec tous les appels API FastAPI (Axios)
+- Développement des composants : ModeSelector, DifficultySelector
+- Développement des composants : ShipPlacer, ShotResult, Leaderboard
+- Connexion et intégration avec le backend FastAPI
+- Rédaction du README frontend
+
+### 7.3 Junior Akonou — Responsable 3D (Unity WebGL) + Déploiement
+
+- Création du projet Unity (Unity 2022 LTS)
+- Modélisation de la grille 3D et des bateaux
+- Implémentation des animations (explosion, splash, victoire)
+- Implémentation de `JSBridge.cs` pour la communication Unity ↔ Next.js
+- Export du projet Unity en WebGL (dossier `public/unity/`)
+- Création du composant `UnityGame.tsx` dans Next.js
 - Déploiement du frontend sur Vercel
 
 ### 7.4 Tableau récapitulatif
 
 | Membre | Pôle | Livrables principaux |
 |---|---|---|
-| Ibrahim Guindo | Backend | API FastAPI complète, IA (3 niveaux), déploiement Railway |
-| Mohand Sadi | BDD + Tests | Modèles SQLAlchemy, PostgreSQL, suite de tests Pytest |
-| Junior Akonou | Frontend + 3D | Interface Next.js, intégration Unity WebGL, déploiement Vercel |
+| Ibrahim Guindo | Backend + BDD + Tests | API FastAPI, modèles BDD, IA (3 niveaux), Railway |
+| Mohand Sadi | Frontend (Next.js) | Pages, composants, lib/api.ts |
+| Junior Akonou | 3D + Déploiement | Unity WebGL 3D, UnityGame.tsx, déploiement Vercel |
 
 ---
 
@@ -316,10 +318,10 @@ battleship-front/
 | Phase | Responsable(s) | Tâches | Livrable |
 |---|---|---|---|
 | Phase 1 | Tous | Setup des dépôts Git, environnements de développement | 2 dépôts initialisés |
-| Phase 2 | Mohand + Ibrahim | Modèles SQLAlchemy, schémas Pydantic, configuration BDD | Modèle de données |
+| Phase 2 | Ibrahim | Modèles SQLAlchemy, schémas Pydantic, BDD, tests Pytest | Modèle de données + Tests |
 | Phase 3 | Ibrahim | Endpoints API, logique de jeu, IA (3 niveaux) | API complète |
-| Phase 4 | Mohand | Tests unitaires et d'intégration, validation endpoints | Suite de tests |
-| Phase 5 | Junior | Interface Next.js, intégration Unity WebGL, JS Bridge | Frontend jouable |
+| Phase 4 | Junior | Intégration Unity WebGL dans Next.js, JS Bridge, animations 3D | Jeu 3D intégré |
+| Phase 5 | Mohand + Junior | Pages et composants Next.js (Mohand), export WebGL final (Junior) | Frontend complet jouable |
 | Phase 6 | Tous | CORS, déploiement Railway + Vercel, README, tests finaux | Version déployée |
 
 ---
@@ -328,7 +330,7 @@ battleship-front/
 
 Ce projet de Bataille Navale 3D constitue une application full-stack ambitieuse et complète, développée par un groupe de trois étudiants de Licence 2 Informatique. La combinaison FastAPI (backend), PostgreSQL (base de données), Next.js (interface web) et Unity WebGL (rendu 3D) illustre une architecture professionnelle moderne avec une séparation claire des responsabilités.
 
-Chaque membre du groupe apporte une contribution distincte et complémentaire : **Ibrahim Guindo** sur le backend et la logique métier (incluant l'IA à trois niveaux), **Mohand Sadi** sur la persistance des données et la qualité du code, et **Junior Akonou** sur l'expérience utilisateur et le rendu 3D. Le déploiement sur Railway et Vercel permettra de présenter une application pleinement fonctionnelle et accessible en ligne.
+Chaque membre du groupe apporte une contribution distincte et complémentaire : **Ibrahim Guindo** sur le backend complet (API, BDD, tests et IA à trois niveaux), **Mohand Sadi** sur l'interface web Next.js, et **Junior Akonou** sur le rendu 3D Unity WebGL et le déploiement. Le déploiement sur Railway et Vercel permettra de présenter une application pleinement fonctionnelle et accessible en ligne.
 
 ---
 
