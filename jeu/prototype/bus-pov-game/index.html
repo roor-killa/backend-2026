@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bus POV Dodger - Martinique Prototype</title>
+  <style>
+    :root {
+      --bg-1: #86d7ff;
+      --bg-2: #dff7ff;
+      --road-dark: #2e343a;
+      --road-mid: #49525b;
+      --lane: #ffe28a;
+      --hud: #0f2430;
+      --hud-soft: #1f3a49;
+      --text: #e8f4fb;
+      --danger: #ff6d5e;
+      --ok: #5ad08b;
+      --accent: #ffd56d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 22% 10%, #c8efff 0%, var(--bg-1) 35%, var(--bg-2) 100%);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .shell {
+      width: min(1200px, 98vw);
+      background: #10222e;
+      border: 2px solid #24465b;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(6, 22, 32, 0.35);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(90deg, #17384a, #0e2532);
+      border-bottom: 1px solid #2d5368;
+      font-size: 14px;
+    }
+
+    .topbar strong {
+      color: #ffe9ac;
+    }
+
+    #game {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: block;
+      background: #000;
+    }
+
+    .controls {
+      padding: 10px 14px 14px;
+      background: #0f2430;
+      border-top: 1px solid #2d5368;
+      color: #a9c6d7;
+      font-size: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+    }
+
+    .pill {
+      border: 1px solid #355c72;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #132d3b;
+    }
+
+    @media (max-width: 700px) {
+      .topbar {
+        font-size: 12px;
+      }
+
+      .controls {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div><strong>Bus POV Dodger</strong> - Martinique Prototype</div>
+      <div id="stateText">RUNNING</div>
+    </div>
+    <canvas id="game" width="1280" height="720"></canvas>
+    <div class="controls">
+      <span class="pill">Move: A/D or Left/Right</span>
+      <span class="pill">Speed: W/S or Up/Down</span>
+      <span class="pill">Pause: P</span>
+      <span class="pill">Restart: R</span>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const stateText = document.getElementById("stateText");
+
+    const cfg = {
+      lanes: 3,
+      laneWidthNear: 170,
+      roadNearWidth: 700,
+      roadFarWidth: 180,
+      horizonY: 170,
+      dashboardY: 610,
+      spawnEveryMs: 780,
+      baseSpeed: 110,
+      maxSpeed: 180,
+      minSpeed: 70
+    };
+
+    const game = {
+      running: true,
+      gameOver: false,
+      lane: 1,
+      speed: 110,
+      score: 0,
+      distance: 0,
+      damage: 0,
+      combo: 0,
+      nearMissTimer: 0,
+      flashTimer: 0,
+      elapsed: 0,
+      spawnClock: 0,
+      laneLineOffset: 0,
+      cars: []
+    };
+
+    const keys = new Set();
+
+    const zones = [
+      { name: "FORT-DE-FRANCE COAST", tint: "#7fd1f2" },
+      { name: "NORTH VOLCANIC RIDGE", tint: "#7bc486" },
+      { name: "BANANA VALLEY", tint: "#8ad37a" },
+      { name: "SOUTH BEACH ROAD", tint: "#8fd9ef" }
+    ];
+
+    function getZone() {
+      const loopDistance = 16;
+      const ratio = (game.distance % loopDistance) / loopDistance;
+      const index = Math.floor(ratio * zones.length) % zones.length;
+      return zones[index];
+    }
+
+    function resetGame() {
+      game.running = true;
+      game.gameOver = false;
+      game.lane = 1;
+      game.speed = 110;
+      game.score = 0;
+      game.distance = 0;
+      game.damage = 0;
+      game.combo = 0;
+      game.nearMissTimer = 0;
+      game.flashTimer = 0;
+      game.elapsed = 0;
+      game.spawnClock = 0;
+      game.laneLineOffset = 0;
+      game.cars = [];
+      stateText.textContent = "RUNNING";
+    }
+
+    function laneToX(lane, yNorm) {
+      const center = canvas.width * 0.5;
+      const roadW = cfg.roadFarWidth + (cfg.roadNearWidth - cfg.roadFarWidth) * yNorm;
+      const laneW = roadW / cfg.lanes;
+      return center - roadW * 0.5 + laneW * (lane + 0.5);
+    }
+
+    function spawnCar() {
+      const lane = Math.floor(Math.random() * cfg.lanes);
+      const type = Math.random() < 0.55 ? "compact" : (Math.random() < 0.75 ? "van" : "sedan");
+      const tintPool = ["#ff7f5d", "#4fa8ff", "#f2c94c", "#66c97a", "#d783ff", "#f26d94"];
+      const tint = tintPool[Math.floor(Math.random() * tintPool.length)];
+
+      game.cars.push({
+        lane,
+        z: 0,
+        speed: 100 + Math.random() * 65,
+        type,
+        tint,
+        passed: false,
+        nearMissGiven: false
+      });
+    }
+
+    function update(dt) {
+      if (!game.running || game.gameOver) return;
+
+      game.elapsed += dt;
+      game.spawnClock += dt * 1000;
+      game.laneLineOffset += game.speed * dt * 1.4;
+      game.distance += game.speed * dt * 0.015;
+      game.score += game.speed * dt * (1 + game.combo * 0.15);
+
+      if (game.nearMissTimer > 0) game.nearMissTimer -= dt;
+      if (game.flashTimer > 0) game.flashTimer -= dt;
+
+      if (game.spawnClock >= cfg.spawnEveryMs) {
+        spawnCar();
+        game.spawnClock = 0;
+      }
+
+      if (keys.has("a") || keys.has("arrowleft")) {
+        game.lane = Math.max(0, game.lane - dt * 4.2);
+      }
+      if (keys.has("d") || keys.has("arrowright")) {
+        game.lane = Math.min(cfg.lanes - 1, game.lane + dt * 4.2);
+      }
+
+      if (keys.has("w") || keys.has("arrowup")) {
+        game.speed = Math.min(cfg.maxSpeed, game.speed + 65 * dt);
+      }
+      if (keys.has("s") || keys.has("arrowdown")) {
+        game.speed = Math.max(cfg.minSpeed, game.speed - 70 * dt);
+      }
+
+      // Mild auto-return toward cruising speed.
+      const cruise = cfg.baseSpeed;
+      game.speed += (cruise - game.speed) * dt * 0.35;
+
+      for (let i = game.cars.length - 1; i >= 0; i--) {
+        const c = game.cars[i];
+        c.z += (c.speed + game.speed * 0.35) * dt;
+
+        const yNorm = Math.min(c.z / 900, 1.1);
+        const y = cfg.horizonY + yNorm * (cfg.dashboardY - cfg.horizonY + 80);
+
+        // Collision test near player dashboard region.
+        if (y > 530 && y < 670) {
+          const laneDelta = Math.abs(c.lane - game.lane);
+          if (laneDelta < 0.36) {
+            game.damage += 30;
+            game.combo = 0;
+            game.flashTimer = 0.22;
+            game.cars.splice(i, 1);
+            if (game.damage >= 100) {
+              game.damage = 100;
+              game.gameOver = true;
+              game.running = false;
+              stateText.textContent = "GAME OVER";
+            }
+            continue;
+          } else if (laneDelta < 0.8 && !c.nearMissGiven && y > 560) {
+            c.nearMissGiven = true;
+            game.combo = Math.min(9, game.combo + 1);
+            game.score += 120 * (1 + game.combo * 0.1);
+            game.nearMissTimer = 1.1;
+          }
+        }
+
+        if (y > canvas.height + 120) {
+          game.cars.splice(i, 1);
+        }
+      }
+    }
+
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, "#86d7ff");
+      g.addColorStop(0.55, "#dff6ff");
+      g.addColorStop(1, "#b8e2b0");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Distant mountain chain.
+      ctx.fillStyle = "#65896d";
+      ctx.beginPath();
+      ctx.moveTo(0, 265);
+      ctx.quadraticCurveTo(120, 210, 250, 260);
+      ctx.quadraticCurveTo(390, 178, 520, 260);
+      ctx.quadraticCurveTo(665, 132, 790, 265);
+      ctx.quadraticCurveTo(920, 188, 1050, 252);
+      ctx.quadraticCurveTo(1160, 214, 1280, 262);
+      ctx.lineTo(1280, 720);
+      ctx.lineTo(0, 720);
+      ctx.closePath();
+      ctx.fill();
+
+      // Mount Pelee-inspired cone.
+      ctx.fillStyle = "#4f6150";
+      ctx.beginPath();
+      ctx.moveTo(720, 265);
+      ctx.lineTo(810, 98);
+      ctx.lineTo(900, 265);
+      ctx.closePath();
+      ctx.fill();
+
+      // Caribbean sea inlet on east side.
+      ctx.fillStyle = "#72c9ee";
+      ctx.fillRect(980, 230, 300, 170);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.28)";
+      for (let i = 0; i < 6; i++) {
+        const y = 245 + i * 24;
+        ctx.fillRect(1000 + (i % 2) * 20, y, 250, 3);
+      }
+
+      // Coastal villages with colorful facades.
+      const drift = (game.elapsed * 22) % 140;
+      for (let i = 0; i < 6; i++) {
+        const x = 70 + i * 170 - drift;
+        const y = 315 + (i % 2) * 8;
+        drawHouse(x, y, 0.9);
+      }
+
+      // Banana plantation strips.
+      ctx.strokeStyle = "#4f9d56";
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 10; i++) {
+        const x = 160 + i * 58;
+        ctx.beginPath();
+        ctx.moveTo(x, 332);
+        ctx.lineTo(x - 22, 398);
+        ctx.stroke();
+      }
+
+      // Palms on both road sides near horizon.
+      for (let i = 0; i < 5; i++) {
+        drawPalm(95 + i * 80, 390 + (i % 2) * 10, 0.75);
+        drawPalm(1040 + i * 52, 390 + ((i + 1) % 2) * 10, 0.72);
+      }
+
+      // Warm sunlight haze for tropical feeling.
+      const sun = ctx.createRadialGradient(180, 92, 20, 180, 92, 130);
+      sun.addColorStop(0, "rgba(255, 225, 133, 0.65)");
+      sun.addColorStop(1, "rgba(255, 225, 133, 0)");
+      ctx.fillStyle = sun;
+      ctx.fillRect(0, 0, 410, 260);
+    }
+
+    function drawHouse(x, y, scale) {
+      const bodyW = 56 * scale;
+      const bodyH = 34 * scale;
+      const roofH = 18 * scale;
+      const colors = ["#f7c24e", "#f4846c", "#76bfdf", "#8dd56a"];
+      const colorIndex = Math.abs(Math.floor(x / 10)) % colors.length;
+
+      ctx.fillStyle = colors[colorIndex];
+      ctx.fillRect(x, y, bodyW, bodyH);
+      ctx.fillStyle = "#ae5545";
+      ctx.beginPath();
+      ctx.moveTo(x - 4 * scale, y);
+      ctx.lineTo(x + bodyW * 0.5, y - roofH);
+      ctx.lineTo(x + bodyW + 4 * scale, y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#d8f0ff";
+      ctx.fillRect(x + 8 * scale, y + 9 * scale, 12 * scale, 10 * scale);
+      ctx.fillRect(x + 26 * scale, y + 9 * scale, 12 * scale, 10 * scale);
+    }
+
+    function drawPalm(x, y, scale) {
+      ctx.fillStyle = "#7f573c";
+      ctx.fillRect(x - 3 * scale, y - 34 * scale, 6 * scale, 36 * scale);
+
+      ctx.fillStyle = "#50af5a";
+      for (let i = 0; i < 5; i++) {
+        const a = -1.2 + i * 0.6;
+        ctx.beginPath();
+        ctx.ellipse(x + Math.cos(a) * 10 * scale, y - 36 * scale + Math.sin(a) * 4 * scale, 18 * scale, 6 * scale, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRoad() {
+      const cx = canvas.width * 0.5;
+      const topY = cfg.horizonY;
+      const botY = cfg.dashboardY + 80;
+      const topW = cfg.roadFarWidth;
+      const botW = cfg.roadNearWidth;
+
+      ctx.fillStyle = "#2f363d";
+      ctx.beginPath();
+      ctx.moveTo(cx - topW * 0.5, topY);
+      ctx.lineTo(cx + topW * 0.5, topY);
+      ctx.lineTo(cx + botW * 0.5, botY);
+      ctx.lineTo(cx - botW * 0.5, botY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Shoulders
+      ctx.fillStyle = "#6f7a84";
+      ctx.beginPath();
+      ctx.moveTo(cx - topW * 0.5 - 18, topY);
+      ctx.lineTo(cx - topW * 0.5, topY);
+      ctx.lineTo(cx - botW * 0.5, botY);
+      ctx.lineTo(cx - botW * 0.5 - 26, botY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + topW * 0.5 + 18, topY);
+      ctx.lineTo(cx + topW * 0.5, topY);
+      ctx.lineTo(cx + botW * 0.5, botY);
+      ctx.lineTo(cx + botW * 0.5 + 26, botY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Lane markers with perspective movement.
+      const laneCount = cfg.lanes - 1;
+      for (let l = 1; l <= laneCount; l++) {
+        for (let i = 0; i < 14; i++) {
+          const scroll = (game.laneLineOffset + i * 120) % 1400;
+          const y = cfg.horizonY + (scroll / 1400) * (cfg.dashboardY - cfg.horizonY + 140);
+          const yNorm = (y - cfg.horizonY) / (cfg.dashboardY - cfg.horizonY + 140);
+          const x = laneToX(l - 0.5, Math.max(0, Math.min(1, yNorm)));
+          const w = 3 + yNorm * 8;
+          const h = 8 + yNorm * 30;
+          ctx.fillStyle = "#ffd966";
+          ctx.fillRect(x - w * 0.5, y, w, h);
+        }
+      }
+    }
+
+    function drawTrafficCar(c) {
+      const yNorm = Math.min(c.z / 900, 1.1);
+      const y = cfg.horizonY + yNorm * (cfg.dashboardY - cfg.horizonY + 80);
+      const x = laneToX(c.lane, Math.max(0, Math.min(1, yNorm)));
+      const s = 0.25 + yNorm * 1.25;
+
+      const w = 80 * s;
+      const h = 42 * s;
+      const roofW = w * (c.type === "van" ? 0.66 : 0.58);
+      const roofH = h * (c.type === "van" ? 0.7 : 0.6);
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = c.tint;
+      ctx.fillRect(-w * 0.5, -h * 0.5, w, h);
+      ctx.fillStyle = "rgba(220, 245, 255, 0.84)";
+      ctx.fillRect(-roofW * 0.5, -h * 0.5 - roofH * 0.5, roofW, roofH);
+      ctx.fillStyle = "#20272d";
+      const r = Math.max(2, 5 * s);
+      ctx.beginPath();
+      ctx.arc(-w * 0.32, h * 0.54, r, 0, Math.PI * 2);
+      ctx.arc(w * 0.32, h * 0.54, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawDashboard() {
+      const y = cfg.dashboardY;
+      ctx.fillStyle = "#142c3a";
+      ctx.fillRect(0, y, canvas.width, canvas.height - y);
+
+      // Steering wheel
+      ctx.strokeStyle = "#0d1c26";
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      ctx.arc(canvas.width * 0.5, y + 92, 68, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(canvas.width * 0.5 - 48, y + 92);
+      ctx.lineTo(canvas.width * 0.5 + 48, y + 92);
+      ctx.moveTo(canvas.width * 0.5, y + 44);
+      ctx.lineTo(canvas.width * 0.5, y + 140);
+      ctx.stroke();
+
+      // Windshield frame
+      ctx.strokeStyle = "#203e50";
+      ctx.lineWidth = 18;
+      ctx.strokeRect(12, 12, canvas.width - 24, y - 8);
+    }
+
+    function drawHud() {
+      const zone = getZone();
+
+      // Top left panel
+      ctx.fillStyle = "rgba(15, 36, 48, 0.9)";
+      ctx.fillRect(20, 20, 320, 120);
+      ctx.fillStyle = "#e8f4fb";
+      ctx.font = "bold 26px Trebuchet MS";
+      ctx.fillText("SPEED", 38, 55);
+      ctx.fillStyle = "#ffd56d";
+      ctx.font = "bold 44px Trebuchet MS";
+      ctx.fillText(Math.round(game.speed).toString(), 38, 105);
+      ctx.fillStyle = "#b7d0dd";
+      ctx.font = "20px Trebuchet MS";
+      ctx.fillText("km/h", 150, 103);
+
+      // Top right panel
+      ctx.fillStyle = "rgba(15, 36, 48, 0.9)";
+      ctx.fillRect(canvas.width - 350, 20, 330, 120);
+      ctx.fillStyle = "#a7d9f0";
+      ctx.font = "22px Trebuchet MS";
+      ctx.fillText("DISTANCE", canvas.width - 332, 55);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 32px Trebuchet MS";
+      ctx.fillText(game.distance.toFixed(2) + " km", canvas.width - 332, 98);
+
+      // Current zone badge.
+      ctx.fillStyle = "rgba(15, 36, 48, 0.9)";
+      ctx.fillRect(canvas.width - 350, 148, 330, 48);
+      ctx.fillStyle = zone.tint;
+      ctx.font = "bold 19px Trebuchet MS";
+      ctx.fillText(zone.name, canvas.width - 332, 179);
+
+      // Damage bar
+      ctx.fillStyle = "rgba(15, 36, 48, 0.9)";
+      ctx.fillRect(20, 214, 470, 50);
+      ctx.fillStyle = "#b8d4e2";
+      ctx.font = "20px Trebuchet MS";
+      ctx.fillText("BUS DAMAGE", 34, 246);
+      ctx.fillStyle = "#273b47";
+      ctx.fillRect(188, 228, 280, 20);
+      const w = (game.damage / 100) * 280;
+      const col = game.damage > 70 ? "#ff6d5e" : game.damage > 35 ? "#ffb45e" : "#5ad08b";
+      ctx.fillStyle = col;
+      ctx.fillRect(188, 228, w, 20);
+
+      // Center score
+      ctx.fillStyle = "rgba(15, 36, 48, 0.88)";
+      ctx.fillRect(canvas.width * 0.5 - 160, 20, 320, 74);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#9ec4d6";
+      ctx.font = "20px Trebuchet MS";
+      ctx.fillText("SCORE", canvas.width * 0.5, 48);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 32px Trebuchet MS";
+      ctx.fillText(Math.floor(game.score).toString(), canvas.width * 0.5, 80);
+      ctx.textAlign = "left";
+
+      // Near miss combo
+      if (game.nearMissTimer > 0 || game.combo > 0) {
+        const alpha = Math.min(1, game.nearMissTimer + 0.25);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "rgba(255, 213, 109, 0.92)";
+        ctx.fillRect(canvas.width * 0.5 - 150, 108, 300, 42);
+        ctx.fillStyle = "#142633";
+        ctx.font = "bold 24px Trebuchet MS";
+        ctx.textAlign = "center";
+        ctx.fillText("NEAR MISS COMBO x" + game.combo, canvas.width * 0.5, 138);
+        ctx.textAlign = "left";
+        ctx.globalAlpha = 1;
+      }
+
+      if (!game.running && !game.gameOver) {
+        drawPauseOverlay("PAUSED");
+      }
+      if (game.gameOver) {
+        drawPauseOverlay("GAME OVER - Press R to Restart");
+      }
+    }
+
+    function drawPauseOverlay(text) {
+      ctx.fillStyle = "rgba(5, 16, 23, 0.58)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.font = "bold 46px Trebuchet MS";
+      ctx.fillText(text, canvas.width * 0.5, canvas.height * 0.5);
+      ctx.textAlign = "left";
+    }
+
+    function render() {
+      drawBackground();
+      drawRoad();
+
+      for (const c of game.cars) {
+        drawTrafficCar(c);
+      }
+
+      drawDashboard();
+      drawHud();
+
+      if (game.flashTimer > 0) {
+        ctx.fillStyle = "rgba(255, 80, 60, 0.22)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+      update(dt);
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (["arrowleft", "arrowright", "arrowup", "arrowdown", " "].includes(k)) {
+        e.preventDefault();
+      }
+
+      if (k === "p") {
+        if (!game.gameOver) {
+          game.running = !game.running;
+          stateText.textContent = game.running ? "RUNNING" : "PAUSED";
+        }
+      } else if (k === "r") {
+        resetGame();
+      } else {
+        keys.add(k);
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      keys.delete(e.key.toLowerCase());
+    });
+
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+services:
+  backend:
+    restart: unless-stopped
+  postgres:
+    restart: unless-stopped
