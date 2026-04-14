@@ -1,0 +1,5 @@
+[project]
+name = "worddrop-backend"
+version = "0.1.0"
+description = "FastAPI backend for Word Drop"
+requires-python = ">=3.12"

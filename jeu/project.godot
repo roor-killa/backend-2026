@@ -17,6 +17,13 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="WordDrop"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/main/game.tscn"
+
+[autoload]
+
+GameState="*res://autoload/game_state.gd"
+AudioManager="*res://autoload/audio_manager.gd"
+ApiClient="*res://autoload/api_client.gd"
 
 [rendering]
 
