@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Riz parfumé long grain 1kg",
+    "url": "https://www.kiprix.com/fr-mq/produits/riz-parfume-long-grain-1kg",
+    "price_france": "2,35 €",
+    "price_dom": "3,10 €",
+    "difference": "+ 31,91%",
+    "quantity_value": 1,
+    "quantity_unit": "kg",
+    "unit_reference": "€/kg",
+    "unit_price_france": 2.35,
+    "unit_price_dom": 3.1,
+    "territory": "mq",
+    "territory_name": "Martinique"
+  },
+  {
+    "name": "Huile de tournesol 1L",
+    "url": "https://www.kiprix.com/fr-mq/produits/huile-de-tournesol-1l",
+    "price_france": "2,99 €",
+    "price_dom": "4,20 €",
+    "difference": "+ 40,47%",
+    "quantity_value": 1,
+    "quantity_unit": "l",
+    "unit_reference": "€/L",
+    "unit_price_france": 2.99,
+    "unit_price_dom": 4.2,
+    "territory": "mq",
+    "territory_name": "Martinique"
+  }
+]

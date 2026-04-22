@@ -95,6 +95,38 @@ battleship-front/
 
 ## 🎮 Intégration Unity WebGL *(Junior)*
 
+### Utilisation dans Next.js
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import UnityGame from '@/components/UnityGame';
+
+export default function GamePage() {
+  const [lastShotResult, setLastShotResult] = useState<{
+    row: number;
+    col: number;
+    result: 'hit' | 'miss' | 'sunk';
+  } | null>(null);
+
+  const onCellSelected = async (row: number, col: number) => {
+    // Exemple: appel API puis envoi du resultat a Unity
+    // const response = await shoot(gameId, row, col)
+    // setLastShotResult(response)
+    setLastShotResult({ row, col, result: 'miss' });
+  };
+
+  return (
+    <UnityGame
+      className="h-[70vh] w-full"
+      onCellSelected={onCellSelected}
+      shotResultToSend={lastShotResult}
+    />
+  );
+}
+```
+
 ### Exporter depuis Unity
 
 1. Ouvrir le projet Unity (`unity-project/`)
