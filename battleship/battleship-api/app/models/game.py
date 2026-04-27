@@ -19,6 +19,10 @@ class Game(Base):
     # Statut : "waiting" | "placement" | "playing" | "finished"
     status        = Column(String(20), nullable=False, default=GameStatus.PLACEMENT)
 
+    # Joueurs de la partie
+    player1_id    = Column(Integer, ForeignKey("players.id"), nullable=False)
+    player2_id    = Column(Integer, ForeignKey("players.id"), nullable=True)
+
     # ID du joueur dont c'est le tour
     current_turn  = Column(Integer, ForeignKey("players.id"), nullable=True)
 
