@@ -80,6 +80,7 @@ def create_game(db: Session, data: GameCreate, player_id: int) -> Game:
         mode=data.mode,
         difficulty=data.difficulty,
         status=GameStatus.PLACEMENT,
+        player1_id=player_id,
         current_turn=player_id,
     )
     db.add(game)
@@ -109,6 +110,8 @@ def join_game(db: Session, game_id: int, player_id: int) -> Game:
         raise HTTPException(400, "Cette partie n'est pas en mode multijoueur.")
     if game.status != GameStatus.WAITING:
         raise HTTPException(400, "Cette partie n'est plus disponible.")
+    if game.player1_id == player_id:
+        raise HTTPException(400, "Le créateur ne peut pas rejoindre sa propre partie.")
 
     # Vérifier que le joueur n'est pas déjà dans la partie
     existing_board = (
@@ -124,6 +127,7 @@ def join_game(db: Session, game_id: int, player_id: int) -> Game:
     db.add(board)
 
     # Passer en phase de placement
+    game.player2_id = player_id
     game.status = GameStatus.PLACEMENT
     db.commit()
     db.refresh(game)
@@ -148,9 +152,11 @@ def place_ships(db: Session, game_id: int, data: PlaceShipsRequest) -> Game:
     if not board:
         raise HTTPException(404, "Board introuvable pour ce joueur dans cette partie.")
 
-    # Vérifier que le joueur n'a pas déjà placé ses bateaux
+    # Si les bateaux sont déjà placés, on retourne simplement l'état actuel
     if db.query(Ship).filter(Ship.board_id == board.id).count() > 0:
-        raise HTTPException(400, "Vous avez déjà placé vos bateaux.")
+        _sync_game_status(db, game)
+        db.refresh(game)
+        return game
 
     # Calculer les positions de chaque bateau et vérifier les chevauchements
     occupied: set[tuple] = set()
@@ -185,14 +191,12 @@ def place_ships(db: Session, game_id: int, data: PlaceShipsRequest) -> Game:
     for ship in ships_to_add:
         db.add(ship)
 
+    # S'assurer que les nouveaux bateaux sont visibles par les requêtes de comptage
+    # avant de décider si la partie peut démarrer.
+    db.flush()
+
     # Vérifier si les deux joueurs ont placé leurs bateaux → démarrer la partie
-    all_boards = db.query(Board).filter(Board.game_id == game_id).all()
-    all_placed = all(
-        db.query(Ship).filter(Ship.board_id == b.id).count() == len(SHIPS)
-        for b in all_boards
-    )
-    if all_placed:
-        game.status = GameStatus.PLAYING
+    _sync_game_status(db, game)
 
     db.commit()
     db.refresh(game)
@@ -200,7 +204,10 @@ def place_ships(db: Session, game_id: int, data: PlaceShipsRequest) -> Game:
 
 
 def get_game(db: Session, game_id: int) -> Game:
-    return _get_game_or_404(db, game_id)
+    game = _get_game_or_404(db, game_id)
+    _sync_game_status(db, game)
+    db.refresh(game)
+    return game
 
 
 def get_boards(db: Session, game_id: int, requesting_player_id: int) -> dict:
@@ -356,6 +363,23 @@ def _get_game_or_404(db: Session, game_id: int) -> Game:
             detail=f"Partie {game_id} introuvable."
         )
     return game
+
+
+def _sync_game_status(db: Session, game: Game) -> None:
+    if game.status != GameStatus.PLACEMENT:
+        return
+
+    all_boards = db.query(Board).filter(Board.game_id == game.id).all()
+    if not all_boards:
+        return
+
+    all_placed = all(
+        db.query(Ship).filter(Ship.board_id == board.id).count() == len(SHIPS)
+        for board in all_boards
+    )
+    if all_placed:
+        game.status = GameStatus.PLAYING
+        db.flush()
 
 
 def _compute_positions(ship: ShipPlacement) -> list[list[int]]:
