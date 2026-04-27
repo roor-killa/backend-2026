@@ -1,4 +1,4 @@
-# 🚢 Bataille Navale 3D — Frontend (Next.js + Unity WebGL)
+#  Bataille Navale 3D — Frontend (Next.js + Unity WebGL)
 
 > Interface web du jeu Bataille Navale 3D
 
@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Prérequis
+## Prérequis
 
 - Node.js 18+
 - npm ou yarn
@@ -16,7 +16,7 @@
 
 ---
 
-## ⚙️ Installation
+## Installation
 
 ```bash
 # 1. Cloner le dépôt
@@ -43,7 +43,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ---
 
-## 🚀 Lancement
+## Lancement
 
 ```bash
 npm run dev     # Développement → http://localhost:3000
@@ -51,11 +51,11 @@ npm run build   # Build production
 npm start       # Lancer en production
 ```
 
-> ⚠️ Le backend FastAPI doit tourner sur http://localhost:8000
+> Le backend FastAPI doit tourner sur http://localhost:8000
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 battleship-front/
@@ -93,7 +93,7 @@ battleship-front/
 
 ---
 
-## 🎮 Intégration Unity WebGL *(Junior)*
+##  Intégration Unity WebGL *(Junior)*
 
 ### Utilisation dans Next.js
 
@@ -150,7 +150,7 @@ Application.ExternalCall("onCellSelected", row, col);
 
 ---
 
-## 🌐 Appels API disponibles *(lib/api.ts — Mohand)*
+##  Appels API disponibles *(lib/api.ts — Mohand)*
 
 ```typescript
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -169,7 +169,7 @@ getShots(id)                      // GET  /games/{id}/shots
 
 ---
 
-## ☁️ Déploiement Vercel *(Junior)*
+## Déploiement Vercel *(Junior)*
 
 ```bash
 npm install -g vercel

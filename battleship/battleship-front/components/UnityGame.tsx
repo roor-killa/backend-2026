@@ -41,6 +41,33 @@ declare global {
   }
 }
 
+const UNITY_BUILD_AVAILABLE = process.env.NEXT_PUBLIC_UNITY_BUILD === 'true';
+
+function UnityPlaceholder({ className }: { className?: string }) {
+  return (
+    <div
+      className={className}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0b1320',
+        color: '#4a9eff',
+        flexDirection: 'column',
+        gap: '12px',
+        borderRadius: '8px',
+        border: '2px dashed #1e3a5f',
+      }}
+    >
+      <span style={{ fontSize: '2rem' }}>⚓</span>
+      <p style={{ margin: 0, fontSize: '1rem' }}>Jeu 3D non disponible</p>
+      <p style={{ margin: 0, fontSize: '0.75rem', color: '#6b8cae' }}>
+        Build Unity WebGL non déployé
+      </p>
+    </div>
+  );
+}
+
 function UnityGame({ className, onCellSelected, shotResultToSend }: UnityGameProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const unityInstanceRef = useRef<UnityInstance | null>(null);
@@ -49,6 +76,8 @@ function UnityGame({ className, onCellSelected, shotResultToSend }: UnityGamePro
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!UNITY_BUILD_AVAILABLE) return;
+
     let disposed = false;
 
     window.onCellSelected = (row: number, col: number) => {
@@ -134,6 +163,10 @@ function UnityGame({ className, onCellSelected, shotResultToSend }: UnityGamePro
       JSON.stringify(shotResultToSend)
     );
   }, [shotResultToSend, isReady]);
+
+  if (!UNITY_BUILD_AVAILABLE) {
+    return <UnityPlaceholder className={className} />;
+  }
 
   return (
     <div className={className}>
