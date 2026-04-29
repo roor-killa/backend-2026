@@ -1,0 +1,53 @@
+{
+  "name": "ti-punch-master",
+  "version": "2.0.0",
+  "description": "Jeu de dosage de cocktails martiniquais",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win":   "electron-builder --win",
+    "build:mac":   "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all":   "electron-builder --win --mac --linux"
+  },
+  "keywords": ["martinique", "cocktail", "game"],
+  "author": "Ti Punch Master Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.tipunchmaster.app",
+    "productName": "Ti Punch Master",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "game.js",
+      "main.js",
+      "icon.png"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.png",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "icon.png",
+      "category": "Game"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerHeaderIcon": "icon.png"
+    }
+  }
+}
