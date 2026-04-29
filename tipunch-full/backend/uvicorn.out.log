@@ -1,0 +1,9 @@
+INFO:     127.0.0.1:54477 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54476 - "GET /clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54478 - "POST /score HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54485 - "GET /clients/madeleine HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54485 - "POST /leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54485 - "GET /leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54485 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54485 - "DELETE /leaderboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54492 - "GET / HTTP/1.1" 200 OK

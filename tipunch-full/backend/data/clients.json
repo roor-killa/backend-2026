@@ -1,0 +1,170 @@
+[
+  {
+    "id": "madeleine",
+    "name": "Madeleine",
+    "avatar": "madeleine",
+    "difficulty": "Facile",
+    "dialogue": "Un bon ti punch bien dosé, siouplé !",
+    "cocktail": "tipunch",
+    "recipes": {
+      "tipunch": {
+        "target": { "rhum": 4, "citron": 3, "sucre": 3 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "jean_claude",
+    "name": "Jean-Claude",
+    "avatar": "jean_claude",
+    "difficulty": "Facile",
+    "dialogue": "Donne-moi un mojito rafraîchissant !",
+    "cocktail": "mojito",
+    "recipes": {
+      "mojito": {
+        "target": { "rhum": 4, "citron": 3, "menthe": 2 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "marie_helene",
+    "name": "Marie-Hélène",
+    "avatar": "marie_helene",
+    "difficulty": "Moyen",
+    "dialogue": "Je voudrais un planteur bien fruité.",
+    "cocktail": "planteur",
+    "recipes": {
+      "planteur": {
+        "target": { "rhum": 4, "orange": 5, "grenadine": 2 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "theo",
+    "name": "Théo",
+    "avatar": "theo",
+    "difficulty": "Moyen",
+    "dialogue": "Un daïquiri fraise s'il te plaît !",
+    "cocktail": "daiquiri",
+    "recipes": {
+      "daiquiri": {
+        "target": { "rhum": 4, "citron": 3, "fraise": 3 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "cecile",
+    "name": "Cécile",
+    "avatar": "cecile",
+    "difficulty": "Facile",
+    "dialogue": "Une sangria légère pour moi.",
+    "cocktail": "sangria",
+    "recipes": {
+      "sangria": {
+        "target": { "vin": 6, "orange": 4, "peche": 2 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "mamie_rose",
+    "name": "Mamie Rose",
+    "avatar": "mamie_rose",
+    "difficulty": "Facile",
+    "dialogue": "Ah, un punch coco comme autrefois !",
+    "cocktail": "punchcoco",
+    "recipes": {
+      "punchcoco": {
+        "target": { "rhum": 4, "coco": 4, "ananas": 3 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "baptiste",
+    "name": "Baptiste",
+    "avatar": "baptiste",
+    "difficulty": "Moyen",
+    "dialogue": "Gin tonic bien équilibré merci.",
+    "cocktail": "gintonic",
+    "recipes": {
+      "gintonic": {
+        "target": { "gin": 4, "citron": 2, "tonic": 6 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "sylvie",
+    "name": "Sylvie",
+    "avatar": "sylvie",
+    "difficulty": "Moyen",
+    "dialogue": "Un spritz pour l'apéro !",
+    "cocktail": "spritz",
+    "recipes": {
+      "spritz": {
+        "target": { "aperol": 4, "prosecco": 5, "soda": 2 },
+        "tolerance": 1.0
+      }
+    }
+  },
+  {
+    "id": "marco",
+    "name": "Marco",
+    "avatar": "marco",
+    "difficulty": "Difficile",
+    "dialogue": "Ti punch fort, comme un vrai martiniquais !",
+    "cocktail": "tipunch_hard",
+    "recipes": {
+      "tipunch_hard": {
+        "target": { "rhum": 6, "citron": 2, "sucre": 2 },
+        "tolerance": 0.5
+      }
+    }
+  },
+  {
+    "id": "laure",
+    "name": "Laure",
+    "avatar": "laure",
+    "difficulty": "Difficile",
+    "dialogue": "Mojito parfait, chaque millilitre compte !",
+    "cocktail": "mojito_hard",
+    "recipes": {
+      "mojito_hard": {
+        "target": { "rhum": 5, "citron": 3, "menthe": 2 },
+        "tolerance": 0.5
+      }
+    }
+  },
+  {
+    "id": "remy",
+    "name": "Rémy",
+    "avatar": "remy",
+    "difficulty": "Difficile",
+    "dialogue": "Daïquiri parfait, soyez précis !",
+    "cocktail": "daiquiri_hard",
+    "recipes": {
+      "daiquiri_hard": {
+        "target": { "rhum": 5, "citron": 3, "fraise": 2 },
+        "tolerance": 0.5
+      }
+    }
+  },
+  {
+    "id": "isabelle",
+    "name": "Isabelle",
+    "avatar": "isabelle",
+    "difficulty": "Facile",
+    "dialogue": "Punch coco léger s'il vous plaît.",
+    "cocktail": "punchcoco",
+    "recipes": {
+      "punchcoco": {
+        "target": { "rhum": 3, "coco": 5, "ananas": 3 },
+        "tolerance": 1.0
+      }
+    }
+  }
+]

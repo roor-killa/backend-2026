@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ti Punch Master</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game">
+
+  <!-- MENU -->
+  <div id="menu-screen" class="screen active">
+    <div class="menu-bg-deco"></div>
+    <div class="menu-content">
+      <div class="menu-logo">🍹</div>
+      <h1 class="game-title">Ti Punch Master</h1>
+      <p class="subtitle">Le bar légendaire de la Martinique</p>
+      <button class="btn btn-primary" onclick="startGame()">▶ Jouer</button>
+      <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 Classement</button>
+      <button class="btn btn-ghost" onclick="showCredits()">À propos</button>
+    </div>
+    <div class="menu-footer">Ti Punch Master v2.0 · Martinique 2026 · 5 manches · 8 cocktails · 12 clients</div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="screen">
+    <div id="hud">
+      <div class="manche-dots" id="manche-dots"></div>
+      <div class="score-hud">Score : <span id="score-display">0</span></div>
+      <div class="timer-wrap"><div id="timer-bar"></div></div>
+    </div>
+    <div id="client-card">
+      <div class="avatar" id="client-avatar"></div>
+      <div class="client-info">
+        <div class="client-name" id="client-name"></div>
+        <div class="client-dialogue" id="client-dialogue"></div>
+        <span class="badge-diff" id="diff-badge"></span>
+      </div>
+    </div>
+    <div id="cocktail-label"></div>
+    <div id="game-area">
+      <div id="glass-wrap">
+        <svg id="glass-svg" viewBox="0 0 90 170">
+          <defs>
+            <clipPath id="glassClip">
+              <polygon points="14,12 76,12 68,158 22,158"/>
+            </clipPath>
+          </defs>
+          <rect id="liq3" x="14" y="145" width="62" height="13" clip-path="url(#glassClip)" fill="#cc4488" opacity="0"/>
+          <rect id="liq2" x="14" y="120" width="62" height="38" clip-path="url(#glassClip)" fill="#22aa66" opacity="0"/>
+          <rect id="liq1" x="14" y="95"  width="62" height="63" clip-path="url(#glassClip)" fill="#f0c040" opacity="0"/>
+          <polygon points="14,12 76,12 68,158 22,158" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linejoin="round"/>
+          <line x1="14" y1="12" x2="76" y2="12" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+          <ellipse cx="45" cy="12" rx="31" ry="6" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+          <ellipse cx="45" cy="158" rx="23" ry="5" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        </svg>
+        <button id="pour-btn" onclick="serve()">Servir</button>
+      </div>
+      <div id="sliders-wrap"></div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div id="feedback-screen" class="screen">
+    <div id="feedback-panel">
+      <div id="feedback-emoji"></div>
+      <div id="feedback-score-anim"></div>
+      <div id="feedback-msg"></div>
+      <div id="feedback-cocktail-name"></div>
+      <div class="dosage-compare" id="dosage-compare"></div>
+      <button class="btn btn-primary" onclick="nextClient()" id="next-btn" disabled>Client suivant →</button>
+    </div>
+  </div>
+
+  <!-- END / LEADERBOARD -->
+  <div id="end-screen" class="screen">
+    <div class="end-wrap">
+      <div class="lb-title" id="end-title">🏆 Classement</div>
+      <div class="final-score" id="final-score-div"></div>
+      <div class="lb-scores" id="lb-list"></div>
+      <div class="end-btns">
+        <button class="btn btn-primary" onclick="startGame()">↺ Rejouer</button>
+        <button class="btn btn-secondary" onclick="goMenu()">⌂ Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREDITS -->
+  <div id="credits-screen" class="screen">
+    <div class="end-wrap">
+      <div class="lb-title">🌴 Ti Punch Master</div>
+      <div class="credits-body">
+        <p>Version 2.0 · Avril 2026</p>
+        <p>Jeu de dosage de cocktails<br>inspiré des bars de la Martinique</p>
+        <p>8 cocktails · 12 clients · 5 manches</p>
+        <p style="margin-top:24px;font-size:12px;opacity:0.6;">Basé sur le cahier des charges<br>Ti Punch Master Unity Desktop Edition</p>
+      </div>
+      <button class="btn btn-secondary" onclick="goMenu()">Retour</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
