@@ -48,6 +48,11 @@ public class DominoBoardRenderer : MonoBehaviour
     // Elle evite que la chaine repasse trop pres d'un ancien domino.
     public float collisionMargin = 0.16f;
 
+    // Les doubles depassent perpendiculairement de la ligne principale.
+    // On leur reserve donc un peu plus d'air pour eviter qu'un futur virage
+    // vienne couper dans leur zone.
+    public float doubleCollisionExtraMargin = 0.26f;
+
     [Header("Lecture de l'espace libre")]
     // Nombre de pas regardes devant un coup possible.
     // Plus cette valeur est grande, plus la chaine anticipe les futurs virages.
@@ -635,6 +640,7 @@ public class DominoBoardRenderer : MonoBehaviour
         PlacementCandidate straightCandidate = CreatePlacementCandidate(tile, cursor, directions[0], rightSide);
 
         if (TryEvaluateCandidate(ref straightCandidate, cursor.LastHitboxIndex) &&
+            straightCandidate.CollisionCount == 0 &&
             straightCandidate.BodyCollisionCount == 0)
         {
             // Un double reste d'abord la piece perpendiculaire claire du trajet.
@@ -1031,7 +1037,7 @@ public class DominoBoardRenderer : MonoBehaviour
             Direction = direction,
             Footprint = footprint,
             Angle = angle,
-            Hitbox = CreateHitbox(position, footprint),
+            Hitbox = CreateHitbox(position, footprint, isDouble),
             BodyHitbox = CreateBodyHitbox(position, footprint),
             DisplayLeft = inwardValue,
             DisplayRight = outwardValue,
@@ -1111,7 +1117,7 @@ public class DominoBoardRenderer : MonoBehaviour
             Direction = direction,
             Footprint = footprint,
             Angle = angle,
-            Hitbox = CreateHitbox(position, footprint),
+            Hitbox = CreateHitbox(position, footprint, isDouble),
             BodyHitbox = CreateBodyHitbox(position, footprint),
             DisplayLeft = inwardValue,
             DisplayRight = outwardValue,
@@ -1145,7 +1151,7 @@ public class DominoBoardRenderer : MonoBehaviour
             Direction = direction,
             Footprint = footprint,
             Angle = angle,
-            Hitbox = CreateHitbox(position, footprint),
+            Hitbox = CreateHitbox(position, footprint, isDouble),
             BodyHitbox = CreateBodyHitbox(position, footprint),
             DisplayLeft = inwardValue,
             DisplayRight = outwardValue,
@@ -1348,10 +1354,15 @@ public class DominoBoardRenderer : MonoBehaviour
     }
 
     // Cree la hitbox locale du domino avec une petite marge.
-    private Rect CreateHitbox(Vector2 position, Vector2 footprint)
+    private Rect CreateHitbox(Vector2 position, Vector2 footprint, bool reserveExtraForDouble = false)
     {
-        float width = footprint.x + collisionMargin * 2f;
-        float height = footprint.y + collisionMargin * 2f;
+        float effectiveMargin = collisionMargin;
+
+        if (reserveExtraForDouble)
+            effectiveMargin += Mathf.Max(0f, doubleCollisionExtraMargin);
+
+        float width = footprint.x + effectiveMargin * 2f;
+        float height = footprint.y + effectiveMargin * 2f;
 
         return new Rect(
             position.x - width * 0.5f,
@@ -1650,7 +1661,7 @@ public class DominoBoardRenderer : MonoBehaviour
 
         spawnedTiles.Add(go);
         Vector2 footprint = GetFootprintForAngle(angle);
-        occupiedHitboxes.Add(CreateHitbox(position, footprint));
+        occupiedHitboxes.Add(CreateHitbox(position, footprint, displayLeft == displayRight));
         occupiedBodyHitboxes.Add(CreateBodyHitbox(position, footprint));
 
         return occupiedHitboxes.Count - 1;

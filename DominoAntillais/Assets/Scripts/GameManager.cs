@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
     // Affiche les zones gauche/droite pour poser le domino selectionne.
     public PlayZoneRenderer playZoneRenderer;
 
-    // Affiche les mains cachees des Joueurs 2 et 3.
+    // Affiche les mains cachees des adversaires.
     public OpponentHandsRenderer opponentHandsRenderer;
 
     // Affiche un petit menu avant la partie pour choisir les regles principales.
@@ -55,6 +55,11 @@ public class GameManager : MonoBehaviour
     // Taille du domino fantome qui suit la souris pendant le drag.
     public Vector2 dragGhostSize = new Vector2(1.34f, 0.66f);
 
+    [Header("Joueurs")]
+    // Nombre de joueurs choisi dans le menu.
+    // 3 = Joueur 1 + 2 IA, 4 = Joueur 1 + 3 IA.
+    public int playerCount = 3;
+
     [Header("Score")]
     // Nombre de manches a gagner pour terminer la partie.
     // Dans ta regle actuelle, on met cochon quand un joueur arrive a 3.
@@ -69,7 +74,7 @@ public class GameManager : MonoBehaviour
     // Etat logique de la table.
     private BoardState board;
 
-    // Les trois joueurs du prototype.
+    // Joueurs de la partie actuelle.
     private List<PlayerData> players;
 
     // Score de chaque joueur dans la partie actuelle.
@@ -168,17 +173,20 @@ public class GameManager : MonoBehaviour
     // Cree une nouvelle partie complete, donc remet les scores a zero.
     private void StartMatch()
     {
-        players = new List<PlayerData>
-        {
-            new PlayerData("Joueur 1"),
-            new PlayerData("Joueur 2"),
-            new PlayerData("Joueur 3")
-        };
+        int effectivePlayerCount = GetEffectivePlayerCount();
+        players = new List<PlayerData>();
 
+        for (int i = 0; i < effectivePlayerCount; i++)
+        {
+            players.Add(new PlayerData("Joueur " + (i + 1)));
+        }
+
+        // La vraie regle du projet reste : 3 points pour gagner et mettre cochon.
+        scoreToWinGame = 3;
         scores = new int[players.Count];
         nextRoundStartingPlayerIndex = -1;
         currentRoundStartsFromPreviousWinner = false;
-        statusMessage = "Nouvelle partie";
+        statusMessage = "Nouvelle partie a " + players.Count + " joueurs";
 
         StartRound();
     }
@@ -201,7 +209,7 @@ public class GameManager : MonoBehaviour
     {
         return new MatchSetupSelection
         {
-            ScoreToWin = scoreToWinGame,
+            PlayerCount = GetEffectivePlayerCount(),
             PlayBlockedRoundsAtPoints = playBlockedRoundsAtPoints,
             HumanTurnTimeLimit = humanTurnTimeLimit,
             AutomaticTurnDelay = automaticTurnDelay,
@@ -213,13 +221,22 @@ public class GameManager : MonoBehaviour
     // Le menu choisit quelques regles de base, puis on demarre une vraie partie.
     public void ApplySetupAndStartMatch(MatchSetupSelection selection)
     {
-        scoreToWinGame = selection.ScoreToWin;
+        playerCount = Mathf.Clamp(selection.PlayerCount, 3, 4);
+        scoreToWinGame = 3;
         playBlockedRoundsAtPoints = selection.PlayBlockedRoundsAtPoints;
         humanTurnTimeLimit = selection.HumanTurnTimeLimit;
         automaticTurnDelay = selection.AutomaticTurnDelay;
         prototypeLanguage = selection.Language;
 
         StartMatch();
+    }
+
+    // Retourne un nombre de joueurs valide.
+    // On garde cette securite parce qu'une ancienne scene Unity peut avoir 0
+    // dans un nouveau champ serialize qui n'existait pas encore.
+    private int GetEffectivePlayerCount()
+    {
+        return Mathf.Clamp(playerCount <= 0 ? 3 : playerCount, 3, 4);
     }
 
     // Cree une nouvelle manche sans remettre les scores a zero.
@@ -315,11 +332,14 @@ public class GameManager : MonoBehaviour
             setupMenuRenderer = gameObject.AddComponent<MatchSetupMenuRenderer>();
     }
 
-    // Distribue 9 dominos a chaque joueur.
-    // A 3 joueurs, cela fait 27 dominos distribues sur les 28 du paquet.
+    // Distribue 7 dominos a chaque joueur.
+    // Regle Martinique a 3 joueurs : 21 dominos distribues, 7 restent de cote.
+    // Regle Guadeloupe / 4 joueurs : 28 dominos distribues, tout le paquet est utilise.
     private void DealTiles()
     {
-        for (int i = 0; i < 9; i++)
+        int tilesPerPlayer = 7;
+
+        for (int i = 0; i < tilesPerPlayer; i++)
         {
             foreach (PlayerData player in players)
             {
@@ -628,7 +648,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Interpretation actuelle du chamboule :
-        // si les 3 joueurs ont au moins 1 point, personne ne peut etre cochon,
+        // si tous les joueurs ont au moins 1 point, personne ne peut etre cochon,
         // donc tout le monde repart a 0.
         if (AllPlayersHaveAtLeastOnePoint())
         {

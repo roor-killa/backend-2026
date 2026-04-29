@@ -19,7 +19,7 @@ public enum PrototypeLanguage
 // sans multiplier les parametres de methode.
 public struct MatchSetupSelection
 {
-    public int ScoreToWin;
+    public int PlayerCount;
     public bool PlayBlockedRoundsAtPoints;
     public float HumanTurnTimeLimit;
     public float AutomaticTurnDelay;
@@ -72,7 +72,7 @@ public class MatchSetupMenuRenderer : MonoBehaviour
     private GameManager boundGameManager;
 
     // Images des boutons d'options pour recolorer la selection.
-    private readonly List<Image> scoreButtonImages = new List<Image>();
+    private readonly List<Image> playerCountButtonImages = new List<Image>();
     private readonly List<Image> blockedButtonImages = new List<Image>();
     private readonly List<Image> timerButtonImages = new List<Image>();
     private readonly List<Image> speedButtonImages = new List<Image>();
@@ -168,7 +168,7 @@ public class MatchSetupMenuRenderer : MonoBehaviour
         CreateLabel(panelObject.transform, "Projet Domino", 36f, FontStyles.Bold);
         CreateDescription(panelObject.transform, "Choisis les regles principales du prototype avant de lancer la partie.");
 
-        BuildScoreRow(panelObject.transform);
+        BuildPlayerCountRow(panelObject.transform);
         BuildBlockedRow(panelObject.transform);
         BuildTimerRow(panelObject.transform);
         BuildSpeedRow(panelObject.transform);
@@ -176,18 +176,18 @@ public class MatchSetupMenuRenderer : MonoBehaviour
         BuildStartButton(panelObject.transform);
     }
 
-    // Ligne "score pour gagner".
-    private void BuildScoreRow(Transform parent)
+    // Ligne pour choisir si la partie se joue a 3 ou 4 joueurs.
+    private void BuildPlayerCountRow(Transform parent)
     {
-        Transform row = CreateOptionRow(parent, "Score pour gagner");
-        scoreButtonImages.Add(CreateOptionButton(row, "3 points", () =>
+        Transform row = CreateOptionRow(parent, "Nombre de joueurs");
+        playerCountButtonImages.Add(CreateOptionButton(row, "3 joueurs", () =>
         {
-            currentSelection.ScoreToWin = 3;
+            currentSelection.PlayerCount = 3;
             RefreshSelectionVisuals();
         }));
-        scoreButtonImages.Add(CreateOptionButton(row, "5 points", () =>
+        playerCountButtonImages.Add(CreateOptionButton(row, "4 joueurs", () =>
         {
-            currentSelection.ScoreToWin = 5;
+            currentSelection.PlayerCount = 4;
             RefreshSelectionVisuals();
         }));
     }
@@ -307,7 +307,7 @@ public class MatchSetupMenuRenderer : MonoBehaviour
     // Rafraichit la couleur des boutons en fonction du choix actuel.
     private void RefreshSelectionVisuals()
     {
-        ApplySelection(scoreButtonImages, currentSelection.ScoreToWin == 3 ? 0 : 1);
+        ApplySelection(playerCountButtonImages, currentSelection.PlayerCount == 4 ? 1 : 0);
         ApplySelection(blockedButtonImages, currentSelection.PlayBlockedRoundsAtPoints ? 0 : 1);
 
         int timerIndex = Mathf.Approximately(currentSelection.HumanTurnTimeLimit, 10f) ? 0

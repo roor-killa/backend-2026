@@ -399,6 +399,7 @@ MonoBehaviour:
   playBlockedRoundsAtPoints: 1
   prototypeLanguage: 0
   dragGhostSize: {x: 1.34, y: 0.66}
+  playerCount: 3
   scoreToWinGame: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
