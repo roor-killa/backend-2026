@@ -1,0 +1,20 @@
+services:
+  api:
+    build:
+      context: ./backend
+    container_name: tipunch-api
+    ports:
+      - "8016:8016"
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: tipunch-frontend
+    ports:
+      - "3016:80"
+    depends_on:
+      - api
+    restart: unless-stopped

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pyo
+*.log
+uvicorn*.out.log
+uvicorn*.err.log

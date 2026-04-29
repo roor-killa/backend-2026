@@ -1,0 +1,3 @@
+*.log
+http-*.out.log
+http-*.err.log
