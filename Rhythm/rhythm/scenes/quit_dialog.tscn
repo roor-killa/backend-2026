@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://quitdlg01"]
+
+[ext_resource type="Script" uid="uid://shihn3gylgbo" path="res://scripts/ui/quit_dialog.gd" id="1_quit"]
+[ext_resource type="Texture2D" uid="uid://buulggig741oh" path="res://assets/background.jpg" id="2_7xf3g"]
+
+[node name="QuitDialog" type="Control" unique_id=575972707]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_quit")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1217992189]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.1, 1)
+
+[node name="TextureRect" type="TextureRect" parent="Background" unique_id=1624821641]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_7xf3g")
+expand_mode = 1
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=28474069]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -80.0
+offset_right = 120.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="ConfirmLabel" type="Label" parent="VBox" unique_id=508595864]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Quit the game?"
+horizontal_alignment = 1
+
+[node name="YesButton" type="Button" parent="VBox" unique_id=1346169453]
+layout_mode = 2
+text = "Yes, Quit"
+
+[node name="NoButton" type="Button" parent="VBox" unique_id=1845445066]
+layout_mode = 2
+text = "Cancel"
+
+[connection signal="pressed" from="VBox/YesButton" to="." method="_on_yes_pressed"]
+[connection signal="pressed" from="VBox/NoButton" to="." method="_on_no_pressed"]

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://31yt7bx2ymos"
+path="res://.godot/imported/vxcelm, ANIZYZ - Your Burn [NCS Release].mp3-6feb0a2b96e11fc171a4929c069ffbf1.mp3str"
+
+[deps]
+
+source_file="res://assets/music/vxcelm, ANIZYZ - Your Burn [NCS Release].mp3"
+dest_files=["res://.godot/imported/vxcelm, ANIZYZ - Your Burn [NCS Release].mp3-6feb0a2b96e11fc171a4929c069ffbf1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

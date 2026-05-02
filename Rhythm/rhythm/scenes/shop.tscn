@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://shop00001"]
+
+[ext_resource type="Script" path="res://scripts/ui/shop.gd" id="1_shop"]
+[ext_resource type="Texture2D" uid="uid://buulggig741oh" path="res://assets/background.jpg" id="2_xfvoa"]
+
+[node name="Shop" type="Control" unique_id=126522133]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_shop")
+
+[node name="Background" type="ColorRect" parent="." unique_id=800144737]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.1, 1)
+
+[node name="TextureRect" type="TextureRect" parent="Background" unique_id=81372856]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_xfvoa")
+expand_mode = 1
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=2059841619]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -180.0
+offset_right = 180.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="VBox" unique_id=790012212]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "SHOP"
+horizontal_alignment = 1
+
+[node name="FundsLabel" type="Label" parent="VBox" unique_id=1377832566]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Funds: 0.00"
+horizontal_alignment = 1
+
+[node name="ShieldsLabel" type="Label" parent="VBox" unique_id=616888136]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Shields: 0"
+horizontal_alignment = 1
+
+[node name="ShieldPriceLabel" type="Label" parent="VBox" unique_id=1338858503]
+layout_mode = 2
+text = "1 Shield = 100 funds"
+horizontal_alignment = 1
+
+[node name="QuantityInput" type="SpinBox" parent="VBox" unique_id=972468584]
+layout_mode = 2
+min_value = 1.0
+max_value = 99.0
+value = 1.0
+
+[node name="BuyButton" type="Button" parent="VBox" unique_id=1152940193]
+layout_mode = 2
+text = "Buy Shields"
+
+[node name="StatusLabel" type="Label" parent="VBox" unique_id=479167030]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="BackButton" type="Button" parent="VBox" unique_id=1542954267]
+layout_mode = 2
+text = "Back"
+
+[connection signal="pressed" from="VBox/BuyButton" to="." method="_on_buy_pressed"]
+[connection signal="pressed" from="VBox/BackButton" to="." method="_on_back_pressed"]

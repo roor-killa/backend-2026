@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://v25o0hy6p3w0"
+path="res://.godot/imported/Ailow, Dionysus - ILYBB [NCS Release].mp3-57bcc2cc0e726cb7bbed114bcce7cd53.mp3str"
+
+[deps]
+
+source_file="res://assets/music/Ailow, Dionysus - ILYBB [NCS Release].mp3"
+dest_files=["res://.godot/imported/Ailow, Dionysus - ILYBB [NCS Release].mp3-57bcc2cc0e726cb7bbed114bcce7cd53.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

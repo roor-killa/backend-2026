@@ -1,0 +1,86 @@
+[gd_scene format=3 uid="uid://mainmenu01"]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_mainmenu"]
+[ext_resource type="Texture2D" uid="uid://buulggig741oh" path="res://assets/background.jpg" id="2_ekxnf"]
+
+[node name="MainMenu" type="Control" unique_id=1976500352]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mainmenu")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1951561808]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.1, 1)
+
+[node name="TextureRect" type="TextureRect" parent="Background" unique_id=1072814997]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_ekxnf")
+expand_mode = 1
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=63239594]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -260.0
+offset_right = 210.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="VBox" unique_id=376184418]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "RHYTHM"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="VBox" unique_id=180630893]
+layout_mode = 2
+text = "Welcome back"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="StartButton" type="Button" parent="VBox" unique_id=1473008613]
+layout_mode = 2
+text = "Start Game"
+
+[node name="LeaderboardButton" type="Button" parent="VBox" unique_id=1336250972]
+layout_mode = 2
+text = "Leaderboard"
+
+[node name="ShopButton" type="Button" parent="VBox" unique_id=1458037881]
+layout_mode = 2
+text = "Shop"
+
+[node name="LogoutButton" type="Button" parent="VBox" unique_id=1780624151]
+layout_mode = 2
+text = "Logout"
+
+[node name="QuitButton" type="Button" parent="VBox" unique_id=246025521]
+layout_mode = 2
+text = "Quit"
+
+[connection signal="pressed" from="VBox/StartButton" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="VBox/LeaderboardButton" to="." method="_on_leaderboard_pressed"]
+[connection signal="pressed" from="VBox/ShopButton" to="." method="_on_shop_pressed"]
+[connection signal="pressed" from="VBox/LogoutButton" to="." method="_on_logout_pressed"]
+[connection signal="pressed" from="VBox/QuitButton" to="." method="_on_quit_pressed"]

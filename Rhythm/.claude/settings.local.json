@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import fastapi, sqlalchemy, alembic, asyncpg, pydantic, passlib\")",
+      "Bash(python3 -c \"import fastapi\")",
+      "Bash(pip3 install *)",
+      "Bash(python3.11 -m pip install -r /projects/Rhythm/backend/requirements.txt)",
+      "Bash(curl -sS https://bootstrap.pypa.io/get-pip.py)",
+      "Bash(python3.11)",
+      "Bash(apt-get install *)",
+      "Bash(sudo apt-get *)",
+      "Bash(pip --version)",
+      "Bash(pip index *)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" http://localhost:8000/health)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:8000/users/login -H 'Content-Type: application/json' -d '{\"username\":\"testplayer\",\"password\":\"secret123\"}')",
+      "Read(//workspace/.devcontainer/**)",
+      "Read(//projects/**)",
+      "Bash(xargs cat *)"
+    ]
+  }
+}

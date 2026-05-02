@@ -1,0 +1,154 @@
+[gd_scene format=3 uid="uid://game00001"]
+
+[ext_resource type="Script" uid="uid://b4o6xjn0ksfsr" path="res://scripts/game/game.gd" id="1_game"]
+[ext_resource type="Script" uid="uid://b6i0ji3ki5sur" path="res://scripts/game/circle_visual.gd" id="2_circle"]
+[ext_resource type="Texture2D" uid="uid://buulggig741oh" path="res://assets/background.jpg" id="2_p57ef"]
+[ext_resource type="Script" path="res://scripts/game/note_spawner.gd" id="3_spawner"]
+[ext_resource type="Script" path="res://scripts/game/hit_detector.gd" id="4_hitdet"]
+[ext_resource type="PackedScene" uid="uid://pausemenu1" path="res://scenes/pause_menu.tscn" id="5_pause"]
+[ext_resource type="AudioStream" uid="uid://0s1pmcp7bncw" path="res://assets/effects/hurt_sound.mp3" id="6_hurt"]
+[ext_resource type="Texture2D" uid="uid://bwnb2yivijkjg" path="res://assets/shield_empty.png" id="7_shield_empty"]
+[ext_resource type="Texture2D" uid="uid://uxalcgnag84p" path="res://assets/heart.png" id="9_u5sy4"]
+
+[node name="Game" type="Node2D" unique_id=488596364]
+script = ExtResource("1_game")
+
+[node name="Background" type="ColorRect" parent="." unique_id=32610627]
+z_index = -1
+offset_left = -16.0
+offset_right = 1938.0
+offset_bottom = 1096.0
+color = Color(0.05, 0.05, 0.1, 1)
+
+[node name="TextureRect" type="TextureRect" parent="Background" unique_id=1376712895]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_p57ef")
+expand_mode = 1
+
+[node name="CenterCircle" type="Node2D" parent="." unique_id=176385963]
+script = ExtResource("2_circle")
+
+[node name="NoteSpawner" type="Node2D" parent="." unique_id=369454044]
+script = ExtResource("3_spawner")
+
+[node name="HitDetector" type="Node2D" parent="." unique_id=188780472]
+script = ExtResource("4_hitdet")
+
+[node name="PauseMenu" parent="." unique_id=220944245 instance=ExtResource("5_pause")]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+
+[node name="Sfx" type="Node" parent="." unique_id=182736451]
+
+[node name="HurtSoundPlayer" type="AudioStreamPlayer" parent="Sfx" unique_id=736451826]
+stream = ExtResource("6_hurt")
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="." unique_id=926718341]
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=213483488]
+
+[node name="ScoreLabel" type="Label" parent="HUD" unique_id=1815835184]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 300.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 22
+text = "Score: 0"
+
+[node name="FundsLabel" type="Label" parent="HUD" unique_id=820871919]
+offset_left = 16.0
+offset_top = 40.0
+offset_right = 300.0
+offset_bottom = 68.0
+theme_override_font_sizes/font_size = 18
+text = "Funds: 0.0"
+
+[node name="ShieldsLabel" type="Label" parent="HUD" unique_id=1891183129]
+offset_left = 16.0
+offset_top = 64.0
+offset_right = 300.0
+offset_bottom = 92.0
+theme_override_font_sizes/font_size = 18
+text = "Shields: 0"
+
+[node name="TimingLabel" type="Label" parent="HUD" unique_id=1014958765]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.35
+anchor_right = 0.5
+anchor_bottom = 0.35
+offset_left = -100.0
+offset_right = 100.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+
+[node name="ShieldIndicator" type="TextureRect" parent="HUD" unique_id=126834911]
+offset_left = -44.0
+offset_top = 91.0
+offset_right = 228.0
+offset_bottom = 274.0
+texture = ExtResource("7_shield_empty")
+expand_mode = 1
+
+[node name="CountdownLabel" type="Label" parent="HUD" unique_id=151228441]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -50.0
+offset_right = 120.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 56
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HeartContainer" type="CanvasLayer" parent="HUD" unique_id=1363116673]
+
+[node name="Heart" type="HBoxContainer" parent="HUD/HeartContainer" unique_id=1825686879]
+offset_left = 128.0
+offset_top = 27.0
+offset_right = 271.0
+offset_bottom = 167.0
+
+[node name="TextureRect" type="TextureRect" parent="HUD/HeartContainer/Heart" unique_id=402313144]
+layout_mode = 2
+texture = ExtResource("9_u5sy4")
+expand_mode = 3
+
+[node name="Heart2" type="HBoxContainer" parent="HUD/HeartContainer" unique_id=261649878]
+offset_left = 231.0
+offset_top = 27.0
+offset_right = 371.0
+offset_bottom = 167.0
+
+[node name="TextureRect" type="TextureRect" parent="HUD/HeartContainer/Heart2" unique_id=1085037328]
+layout_mode = 2
+texture = ExtResource("9_u5sy4")
+expand_mode = 3
+
+[node name="Heart3" type="HBoxContainer" parent="HUD/HeartContainer" unique_id=1354363790]
+offset_left = 340.0
+offset_top = 27.0
+offset_right = 480.0
+offset_bottom = 167.0
+
+[node name="TextureRect" type="TextureRect" parent="HUD/HeartContainer/Heart3" unique_id=538808484]
+layout_mode = 2
+texture = ExtResource("9_u5sy4")
+expand_mode = 3

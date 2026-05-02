@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rhythm_postgres
+    environment:
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_pass
+      POSTGRES_DB: rhythm_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - rhythm_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d rhythm_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    networks:
+      - app-network
+    depends_on:
+      - postgres    
+    ports:
+      - "8000:8000"      # attend que postgres démarre
+  
+
+
+  nginx:
+    image: nginx:alpine
+    ports:
+    - "127.0.0.1:80:80"    # ← force IPv4
+    volumes:
+      - ./html:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  rhythm_pg_data:
+
+networks:
+  app-network:
+    driver: bridge
